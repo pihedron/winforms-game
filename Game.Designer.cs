@@ -1,0 +1,70 @@
+﻿namespace Game
+{
+    partial class Game
+    {
+        /// <summary>
+        ///  Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        ///  Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        ///  Required method for Designer support - do not modify
+        ///  the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            components = new System.ComponentModel.Container();
+            canvas = new PictureBox();
+            timer = new System.Windows.Forms.Timer(components);
+            ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
+            SuspendLayout();
+            // 
+            // canvas
+            // 
+            canvas.Location = new Point(12, 12);
+            canvas.Name = "canvas";
+            canvas.Size = new Size(776, 426);
+            canvas.TabIndex = 0;
+            canvas.TabStop = false;
+            canvas.Paint += OnCanvasPaint;
+            // 
+            // timer
+            // 
+            timer.Enabled = true;
+            timer.Interval = 1;
+            timer.Tick += Tick;
+            // 
+            // Game
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(800, 450);
+            Controls.Add(canvas);
+            Name = "Game";
+            Text = "Game";
+            Resize += OnFormResize;
+            ((System.ComponentModel.ISupportInitialize)canvas).EndInit();
+            ResumeLayout(false);
+        }
+
+        #endregion
+
+        private PictureBox canvas;
+        private System.Windows.Forms.Timer timer;
+    }
+}
