@@ -45,24 +45,24 @@ namespace Game
             kb[e.KeyCode] = false;
         }
 
-        private bool Down(Keys key)
+        private static bool Pressed(Keys key)
         {
             return kb.ContainsKey(key) && kb[key];
         }
 
         private void MovePlayer()
         {
-            if (Down(Keys.D))
+            if (Pressed(Keys.D))
             {
                 player.vel.x += player.movePower;
             }
 
-            if (Down(Keys.A))
+            if (Pressed(Keys.A))
             {
                 player.vel.x -= player.movePower;
             }
 
-            if (Down(Keys.W) && player.grounded)
+            if (Pressed(Keys.W) && player.grounded)
             {
                 player.vel.y = -player.jumpHeight;
             }
@@ -122,17 +122,17 @@ namespace Game
             return v - cam.pos + view / 2;
         }
 
-        private bool Intersecting(Vector p1, Vector d1, Vector p2, Vector d2)
+        private static bool Intersecting(Vector p1, Vector d1, Vector p2, Vector d2)
         {
             return p1.x + d1.x / 2 > p2.x - d2.x / 2 && p1.x - d1.x / 2 < p2.x + d2.x / 2 && p1.y + d1.y / 2 > p2.y - d2.y / 2 && p1.y - d1.y / 2 < p2.y + d2.y / 2;
         }
 
-        private bool IntersectingTopLeft(Vector p1, Vector d1, Vector p2, Vector d2)
+        private static bool IntersectingTopLeft(Vector p1, Vector d1, Vector p2, Vector d2)
         {
             return p1.x + d1.x > p2.x && p1.x < p2.x + d2.x && p1.y + d1.y > p2.y && p1.y < p2.y + d2.y;
         }
 
-        private void DrawBox(Graphics g, Vector pos, Vector dim)
+        private static void DrawBox(Graphics g, Vector pos, Vector dim)
         {
             g.FillRectangle(brush, pos.x, pos.y, dim.x, dim.y);
         }
