@@ -12,7 +12,7 @@ namespace Game
         public Vector dim;
         public Vector vel = new(0, 0);
 
-        public bool grounded = false;
+        public bool isGrounded = false;
 
         public float movePower;
         public float jumpHeight;

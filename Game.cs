@@ -10,13 +10,14 @@ namespace Game
         const float friction = 0.25F;
         const float gravity = 1;
 
-        Entity player = new(new Vector(), new Vector(32, 32), 2, 16);
+        Entity player = new(new Vector(), new Vector(32, 64), 2, 16);
+        Bitmap idle = new("../../../img/player.png");
         Camera cam = new();
         Vector view = new();
         List<Block> world = new()
         {
             new Block(new Vector(0, 32), new Vector(256, 64)),
-            new Block(new Vector(0, -64), new Vector(128, 32)),
+            new Block(new Vector(0, -128), new Vector(128, 32)),
             new Block(new Vector(112, -128), new Vector(32, 256)),
         };
 
@@ -62,7 +63,7 @@ namespace Game
                 player.vel.x -= player.movePower;
             }
 
-            if (Pressed(Keys.W) && player.grounded)
+            if (Pressed(Keys.W) && player.isGrounded)
             {
                 player.vel.y = -player.jumpHeight;
             }
@@ -79,7 +80,7 @@ namespace Game
 
             player.vel.x *= 1 - friction;
 
-            player.grounded = false;
+            player.isGrounded = false;
 
             foreach (var block in world)
             {
@@ -89,7 +90,7 @@ namespace Game
                     {
                         player.vel.y = 0;
                         player.pos.y = block.pos.y - block.dim.y / 2 - player.dim.y / 2;
-                        player.grounded = true;
+                        player.isGrounded = true;
                     }
 
                     if (old.y >= block.pos.y + block.dim.y / 2)
@@ -137,9 +138,22 @@ namespace Game
             g.FillRectangle(brush, pos.x, pos.y, dim.x, dim.y);
         }
 
+        private void DrawImage(Graphics g, Vector pos, Vector dim)
+        {
+            Vector v = Offset(new(pos.x - idle.Width / 2, pos.y - idle.Height + dim.y / 2));
+            Bitmap frame = (Bitmap)idle.Clone();
+            if (player.vel.x < 0)
+            {
+                frame.RotateFlip(RotateFlipType.RotateNoneFlipX);
+            }
+            g.DrawImage(frame, v.x, v.y, idle.Width, idle.Height);
+            frame.Dispose();
+        }
+
         private void DrawEntity(Graphics g, Entity entity)
         {
-            DrawBox(g, Offset(entity.pos - entity.dim / 2), entity.dim);
+            //DrawBox(g, Offset(entity.pos - entity.dim / 2), entity.dim);
+            DrawImage(g, entity.pos, entity.dim);
         }
 
         private void DrawWorld(Graphics g)
@@ -161,9 +175,11 @@ namespace Game
 
         private void OnCanvasPaint(object sender, PaintEventArgs e)
         {
-            e.Graphics.Clear(Color.White);
+            e.Graphics.Clear(Color.Gray);
             DrawWorld(e.Graphics);
+            brush.Color = Color.Blue;
             DrawEntity(e.Graphics, player);
+            brush.Color = Color.Black;
         }
 
         private void AdjustView()
