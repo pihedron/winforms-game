@@ -10,16 +10,17 @@ namespace Game
         const float friction = 0.25F;
         const float gravity = 1;
 
-        Entity player = new(new Vector(), new Vector(32, 64), 2, 16);
-        Bitmap idle = new("../../../img/player.png");
-        Camera cam = new();
-        Vector view = new();
-        List<Block> world = new()
-        {
+        static Entity player = new(new Vector(), new Vector(32, 64), 2, 16, "player");
+        static Camera cam = new();
+        static Vector view = new();
+        static List<Block> world =
+        [
             new Block(new Vector(0, 32), new Vector(256, 64)),
             new Block(new Vector(0, -128), new Vector(128, 32)),
-            new Block(new Vector(112, -128), new Vector(32, 256)),
-        };
+            new Block(new Vector(144, -64), new Vector(32, 256)),
+        ];
+
+        static int tick = 0;
 
         public Game()
         {
@@ -34,6 +35,9 @@ namespace Game
             // event listeners
             KeyDown += OnKeyDown;
             KeyUp += OnKeyUp;
+
+            // other
+            player.GetFrames();
         }
 
         private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -84,7 +88,7 @@ namespace Game
 
             foreach (var block in world)
             {
-                if (block.isClose && Intersecting(player.pos, player.dim, block.pos, block.dim))
+                if (block.isClose && player.IsIntersecting(block))
                 {
                     if (old.y <= block.pos.y - block.dim.y / 2)
                     {
@@ -115,17 +119,19 @@ namespace Game
 
             cam.pos += (player.pos - cam.pos) / 2;
 
+            if (tick % 5 == 0)
+            {
+                player.frameIndex++;
+            }
+
+            tick++;
+
             canvas.Invalidate();
         }
 
         private Vector Offset(Vector v)
         {
             return v - cam.pos + view / 2;
-        }
-
-        private static bool Intersecting(Vector p1, Vector d1, Vector p2, Vector d2)
-        {
-            return p1.x + d1.x / 2 > p2.x - d2.x / 2 && p1.x - d1.x / 2 < p2.x + d2.x / 2 && p1.y + d1.y / 2 > p2.y - d2.y / 2 && p1.y - d1.y / 2 < p2.y + d2.y / 2;
         }
 
         private static bool IntersectingTopLeft(Vector p1, Vector d1, Vector p2, Vector d2)
@@ -140,13 +146,14 @@ namespace Game
 
         private void DrawImage(Graphics g, Vector pos, Vector dim)
         {
-            Vector v = Offset(new(pos.x - idle.Width / 2, pos.y - idle.Height + dim.y / 2));
-            Bitmap frame = (Bitmap)idle.Clone();
+            player.frameIndex %= player.stateFrames[player.state].Length;
+            Vector v = Offset(new(pos.x - player.stateFrames[player.state][player.frameIndex].Width / 2, pos.y - player.stateFrames[player.state][player.frameIndex].Height + dim.y / 2));
+            Bitmap frame = (Bitmap)player.stateFrames[player.state][player.frameIndex].Clone();
             if (player.vel.x < 0)
             {
                 frame.RotateFlip(RotateFlipType.RotateNoneFlipX);
             }
-            g.DrawImage(frame, v.x, v.y, idle.Width, idle.Height);
+            g.DrawImage(frame, v.x, v.y, player.stateFrames[player.state][player.frameIndex].Width, player.stateFrames[player.state][player.frameIndex].Height);
             frame.Dispose();
         }
 

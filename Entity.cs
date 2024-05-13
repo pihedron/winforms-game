@@ -6,23 +6,40 @@ using System.Threading.Tasks;
 
 namespace Game
 {
-    public class Entity
+    public enum EntityState
     {
-        public Vector pos;
-        public Vector dim;
+        Idle,
+        //Walk,
+        //Attack,
+    }
+
+    public class Entity(Vector pos, Vector dim, float movePower, float jumpHeight, string name) : Box(pos, dim)
+    {
         public Vector vel = new(0, 0);
 
         public bool isGrounded = false;
 
-        public float movePower;
-        public float jumpHeight;
+        public float movePower = movePower;
+        public float jumpHeight = jumpHeight;
 
-        public Entity(Vector pos, Vector dim, float movePower, float jumpHeight)
+        public string name = name;
+
+        public EntityState state = EntityState.Idle;
+        public Dictionary<EntityState, Bitmap[]> stateFrames = [];
+        public int frameIndex = 0;
+
+        public void GetFrames()
         {
-            this.pos = pos;
-            this.dim = dim;
-            this.movePower = movePower;
-            this.jumpHeight = jumpHeight;
+            foreach (var stateValue in Enum.GetValues(typeof(EntityState)).Cast<EntityState>())
+            {
+                List<Bitmap> frames = [];
+                foreach (var file in Directory.EnumerateFiles($"../../../img/{name}/{stateValue.ToString().ToLower()}"))
+                {
+                    frames.Add(new(file));
+                }
+
+                stateFrames[stateValue] = [.. frames];
+            }
         }
     }
 }
