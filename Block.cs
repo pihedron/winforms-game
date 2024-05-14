@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace Game
 {
-    public class Block(Vector pos, Vector dim) : Box(pos, dim)
+    public class Block : Box
     {
         public bool isClose = false;
+
+        public Block(Vector pos, Vector dim) : base(pos, dim) { }
     }
 }

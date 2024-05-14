@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace Game
 {
-    public class Box(Vector pos, Vector dim)
+    public class Box
     {
-        public Vector pos = pos;
-        public Vector dim = dim;
+        public Vector pos;
+        public Vector dim;
+
+        public Box(Vector pos, Vector dim) { this.pos = pos; this.dim = dim; }
 
         public bool IsIntersecting(Box box)
         {

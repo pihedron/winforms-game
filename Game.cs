@@ -13,12 +13,12 @@ namespace Game
         static Entity player = new(new Vector(), new Vector(32, 64), 2, 16, "player");
         static Camera cam = new();
         static Vector view = new();
-        static List<Block> world =
-        [
+        static List<Block> world = new()
+        {
             new Block(new Vector(0, 32), new Vector(256, 64)),
             new Block(new Vector(0, -128), new Vector(128, 32)),
             new Block(new Vector(144, -64), new Vector(32, 256)),
-        ];
+        };
 
         static int tick = 0;
 
@@ -27,8 +27,6 @@ namespace Game
             InitializeComponent();
 
             // fullscreen settings
-            FormBorderStyle = FormBorderStyle.None;
-            WindowState = FormWindowState.Maximized;
             canvas.Dock = DockStyle.Fill;
             AdjustView();
 
@@ -198,6 +196,11 @@ namespace Game
         private void OnFormResize(object sender, EventArgs e)
         {
             AdjustView();
+        }
+
+        private void OnLoad(object sender, EventArgs e)
+        {
+            // game settings
         }
     }
 }

@@ -13,32 +13,39 @@ namespace Game
         //Attack,
     }
 
-    public class Entity(Vector pos, Vector dim, float movePower, float jumpHeight, string name) : Box(pos, dim)
+    public class Entity : Box
     {
         public Vector vel = new(0, 0);
 
         public bool isGrounded = false;
 
-        public float movePower = movePower;
-        public float jumpHeight = jumpHeight;
+        public float movePower;
+        public float jumpHeight;
 
-        public string name = name;
+        public string name;
 
         public EntityState state = EntityState.Idle;
-        public Dictionary<EntityState, Bitmap[]> stateFrames = [];
+        public Dictionary<EntityState, Bitmap[]> stateFrames = new();
         public int frameIndex = 0;
+
+        public Entity(Vector pos, Vector dim, float movePower, float jumpHeight, string name) : base(pos, dim)
+        {
+            this.movePower = movePower;
+            this.jumpHeight = jumpHeight;
+            this.name = name;
+        }
 
         public void GetFrames()
         {
             foreach (var stateValue in Enum.GetValues(typeof(EntityState)).Cast<EntityState>())
             {
-                List<Bitmap> frames = [];
+                List<Bitmap> frames = new();
                 foreach (var file in Directory.EnumerateFiles($"../../../img/{name}/{stateValue.ToString().ToLower()}"))
                 {
                     frames.Add(new(file));
                 }
 
-                stateFrames[stateValue] = [.. frames];
+                stateFrames[stateValue] = frames.ToArray();
             }
         }
     }
