@@ -9,7 +9,7 @@ namespace Game
     public enum EntityState
     {
         Idle,
-        //Walk,
+        Walk,
         //Attack,
     }
 
@@ -27,6 +27,7 @@ namespace Game
         public EntityState state = EntityState.Idle;
         public Dictionary<EntityState, Bitmap[]> stateFrames = new();
         public int frameIndex = 0;
+        public bool isFacingLeft = false;
 
         public Entity(Vector pos, Vector dim, float movePower, float jumpHeight, string name) : base(pos, dim)
         {

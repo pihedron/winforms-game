@@ -16,7 +16,7 @@ namespace Game
         static List<Block> world = new()
         {
             new Block(new Vector(0, 32), new Vector(256, 64)),
-            new Block(new Vector(0, -128), new Vector(128, 32)),
+            new Block(new Vector(0, -80), new Vector(128, 32)),
             new Block(new Vector(144, -64), new Vector(32, 256)),
         };
 
@@ -74,9 +74,27 @@ namespace Game
         private void Tick(object? sender, EventArgs e)
         {
             Vector old = player.pos;
-            player.vel.y += gravity;
 
             MovePlayer();
+
+            player.vel.y += gravity;
+
+            if (Math.Round(player.vel.x) == 0)
+            {
+                player.state = EntityState.Idle;
+            }
+            else
+            {
+                player.state = EntityState.Walk;
+                if (player.vel.x < 0)
+                {
+                    player.isFacingLeft = true;
+                }
+                else
+                {
+                    player.isFacingLeft = false;
+                }
+            }
 
             player.pos += player.vel;
 
@@ -88,29 +106,41 @@ namespace Game
             {
                 if (block.isClose && player.IsIntersecting(block))
                 {
+                    Vector delta = new();
+
                     if (old.y <= block.pos.y - block.dim.y / 2)
                     {
-                        player.vel.y = 0;
-                        player.pos.y = block.pos.y - block.dim.y / 2 - player.dim.y / 2;
+                        delta.y = -1;
                         player.isGrounded = true;
                     }
 
                     if (old.y >= block.pos.y + block.dim.y / 2)
                     {
-                        player.vel.y = 0;
-                        player.pos.y = block.pos.y + block.dim.y / 2 + player.dim.y / 2;
+                        delta.y = 1;
                     }
 
                     if (old.x <= block.pos.x - block.dim.x / 2)
                     {
-                        player.vel.x = 0;
-                        player.pos.x = block.pos.x - block.dim.x / 2 - player.dim.x / 2;
+                        delta.x = -1;
                     }
 
                     if (old.x >= block.pos.x + block.dim.x / 2)
                     {
+                        delta.x = 1;
+                    }
+
+                    float x = Math.Abs(delta.x);
+                    float y = Math.Abs(delta.y);
+                    if (x > 0 && y == 0 || x >= y)
+                    {
                         player.vel.x = 0;
-                        player.pos.x = block.pos.x + block.dim.x / 2 + player.dim.x / 2;
+                        player.pos.x = block.pos.x + delta.x * block.dim.x / 2 + delta.x * player.dim.x / 2;
+                        player.isGrounded = false;
+                    }
+                    if (y > 0 && x == 0)
+                    {
+                        player.vel.y = 0;
+                        player.pos.y = block.pos.y + delta.y * block.dim.y / 2 + delta.y * player.dim.y / 2;
                     }
                 }
             }
@@ -144,15 +174,17 @@ namespace Game
 
         private void DrawImage(Graphics g, Vector pos, Vector dim)
         {
-            player.frameIndex %= player.stateFrames[player.state].Length;
-            Vector v = Offset(new(pos.x - player.stateFrames[player.state][player.frameIndex].Width / 2, pos.y - player.stateFrames[player.state][player.frameIndex].Height + dim.y / 2));
-            Bitmap frame = (Bitmap)player.stateFrames[player.state][player.frameIndex].Clone();
-            if (player.vel.x < 0)
+            Bitmap[] frames = player.stateFrames[player.state];
+            player.frameIndex %= frames.Length;
+            Bitmap frame = frames[player.frameIndex];
+            Vector v = Offset(new(pos.x - frame.Width / 2, pos.y - frame.Height + dim.y / 2));
+            Bitmap bitmap = (Bitmap)frame.Clone();
+            if (player.isFacingLeft)
             {
-                frame.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                bitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
             }
-            g.DrawImage(frame, v.x, v.y, player.stateFrames[player.state][player.frameIndex].Width, player.stateFrames[player.state][player.frameIndex].Height);
-            frame.Dispose();
+            g.DrawImage(bitmap, v.x, v.y, bitmap.Width, bitmap.Height);
+            bitmap.Dispose();
         }
 
         private void DrawEntity(Graphics g, Entity entity)
