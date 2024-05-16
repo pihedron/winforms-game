@@ -1,4 +1,5 @@
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace Game
 {
@@ -13,12 +14,7 @@ namespace Game
         static Entity player = new(new Vector(), new Vector(32, 64), 2, 16, "player");
         static Camera cam = new();
         static Vector view = new();
-        static List<Block> world = new()
-        {
-            new Block(new Vector(0, 32), new Vector(256, 64)),
-            new Block(new Vector(0, -80), new Vector(128, 32)),
-            new Block(new Vector(144, -64), new Vector(32, 256)),
-        };
+        static List<Block> world = new();
 
         static int tick = 0;
 
@@ -34,8 +30,13 @@ namespace Game
             KeyDown += OnKeyDown;
             KeyUp += OnKeyUp;
 
-            // other
+            // load assets
             player.GetFrames();
+            foreach (var line in File.ReadLines("../../../world.txt"))
+            {
+                float[] values = line.Split(' ').Select((string val) => float.Parse(val)).ToArray();
+                world.Add(new Block(new Vector(values[0], values[1]), new Vector(values[2], values[3])));
+            }
         }
 
         private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -79,7 +80,7 @@ namespace Game
 
             player.vel.y += gravity;
 
-            if (Math.Round(player.vel.x) == 0)
+            if (Math.Abs(player.vel.x) < 1)
             {
                 player.state = EntityState.Idle;
             }
@@ -100,7 +101,30 @@ namespace Game
 
             player.vel.x *= 1 - friction;
 
+            HandleCollisions(old);
+
+            cam.pos += (player.pos - cam.pos) / 2;
+
+            if (tick % 5 == 0)
+            {
+                player.frameIndex++;
+            }
+
+            tick++;
+
+            canvas.Invalidate();
+        }
+
+        private static void HandleCollisions(Vector old)
+        {
             player.isGrounded = false;
+
+            if (player.pos.y + player.dim.y / 2 > 0)
+            {
+                player.vel.y = 0;
+                player.pos.y = -player.dim.y / 2;
+                player.isGrounded = true;
+            }
 
             foreach (var block in world)
             {
@@ -144,22 +168,11 @@ namespace Game
                     }
                 }
             }
-
-            cam.pos += (player.pos - cam.pos) / 2;
-
-            if (tick % 5 == 0)
-            {
-                player.frameIndex++;
-            }
-
-            tick++;
-
-            canvas.Invalidate();
         }
 
-        private Vector Offset(Vector v)
+        private Vector Offset(Vector vec)
         {
-            return v - cam.pos + view / 2;
+            return vec - cam.pos + view / 2;
         }
 
         private static bool IntersectingTopLeft(Vector p1, Vector d1, Vector p2, Vector d2)
@@ -189,16 +202,21 @@ namespace Game
 
         private void DrawEntity(Graphics g, Entity entity)
         {
-            //DrawBox(g, Offset(entity.pos - entity.dim / 2), entity.dim);
             DrawImage(g, entity.pos, entity.dim);
         }
 
         private void DrawWorld(Graphics g)
         {
+            if (cam.pos.y + view.y / 2 > 0)
+            {
+                float y = view.y / 2 - cam.pos.y;
+                g.FillRectangle(brush, 0, y, view.x, view.y - y); // infinite floor
+            }
+
             foreach (var block in world)
             {
                 Vector pos = Offset(block.pos - block.dim / 2);
-                if (IntersectingTopLeft(pos, block.dim, new Vector(), view))
+                if (IntersectingTopLeft(pos, block.dim, new(), view))
                 {
                     DrawBox(g, pos, block.dim);
                     block.isClose = true;
