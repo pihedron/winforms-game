@@ -6,7 +6,9 @@ namespace Game
     public partial class Game : Form
     {
         static Dictionary<Keys, bool> kb = new();
+        static Dictionary<Keys, bool> shadow = new();
         static SolidBrush brush = new(Color.Black);
+        static Pen pen = new(Color.Black);
 
         const float friction = 0.25F;
         const float gravity = 1;
@@ -15,6 +17,7 @@ namespace Game
         static Camera cam = new();
         static Vector view = new();
         static List<Block> world = new();
+        static Circuit circuit;
 
         static int tick = 0;
 
@@ -37,6 +40,24 @@ namespace Game
                 float[] values = line.Split(' ').Select((string val) => float.Parse(val)).ToArray();
                 world.Add(new Block(new Vector(values[0], values[1]), new Vector(values[2], values[3])));
             }
+            string[] lines = File.ReadLines("../../../circuits.txt").ToArray();
+            circuit = new();
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string[] values = lines[i].Split(' ');
+                switch (values[0])
+                {
+                    case "SRC":
+                        circuit.nodes.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), int.Parse(values[3]) != 0));
+                        break;
+                    case "BOX":
+                        circuit.outputs.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), values[3..].Select((string s) => int.Parse(s)).ToArray()));
+                        break;
+                    default:
+                        circuit.nodes.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), values[0], values[3..].Select((string s) => int.Parse(s)).ToArray()));
+                        break;
+                }
+            }
         }
 
         private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -47,11 +68,17 @@ namespace Game
         private void OnKeyUp(object? sender, KeyEventArgs e)
         {
             kb[e.KeyCode] = false;
+            shadow[Keys.S] = false;
         }
 
         private static bool Pressed(Keys key)
         {
             return kb.ContainsKey(key) && kb[key];
+        }
+
+        private static bool Down(Keys key)
+        {
+            return shadow.ContainsKey(key) && shadow[key];
         }
 
         private void MovePlayer()
@@ -80,6 +107,28 @@ namespace Game
 
             player.vel.y += gravity;
 
+            AnimatePlayer();
+
+            player.pos += player.vel;
+
+            player.vel.x *= 1 - friction;
+
+            HandleCollisions(old);
+
+            cam.pos += (player.pos - cam.pos) / 4;
+
+            if (tick % 5 == 0)
+            {
+                player.frameIndex++;
+            }
+
+            tick++;
+
+            canvas.Invalidate();
+        }
+
+        private static void AnimatePlayer()
+        {
             if (Math.Abs(player.vel.x) < 1)
             {
                 player.state = EntityState.Idle;
@@ -96,23 +145,6 @@ namespace Game
                     player.isFacingLeft = false;
                 }
             }
-
-            player.pos += player.vel;
-
-            player.vel.x *= 1 - friction;
-
-            HandleCollisions(old);
-
-            cam.pos += (player.pos - cam.pos) / 2;
-
-            if (tick % 5 == 0)
-            {
-                player.frameIndex++;
-            }
-
-            tick++;
-
-            canvas.Invalidate();
         }
 
         private static void HandleCollisions(Vector old)
@@ -130,43 +162,52 @@ namespace Game
             {
                 if (block.isClose && player.IsIntersecting(block))
                 {
-                    Vector delta = new();
-
-                    if (old.y <= block.pos.y - block.dim.y / 2)
-                    {
-                        delta.y = -1;
-                        player.isGrounded = true;
-                    }
-
-                    if (old.y >= block.pos.y + block.dim.y / 2)
-                    {
-                        delta.y = 1;
-                    }
-
-                    if (old.x <= block.pos.x - block.dim.x / 2)
-                    {
-                        delta.x = -1;
-                    }
-
-                    if (old.x >= block.pos.x + block.dim.x / 2)
-                    {
-                        delta.x = 1;
-                    }
-
-                    float x = Math.Abs(delta.x);
-                    float y = Math.Abs(delta.y);
-                    if (x > 0 && y == 0 || x >= y)
-                    {
-                        player.vel.x = 0;
-                        player.pos.x = block.pos.x + delta.x * block.dim.x / 2 + delta.x * player.dim.x / 2;
-                        player.isGrounded = false;
-                    }
-                    if (y > 0 && x == 0)
-                    {
-                        player.vel.y = 0;
-                        player.pos.y = block.pos.y + delta.y * block.dim.y / 2 + delta.y * player.dim.y / 2;
-                    }
+                    CollideWithBox(old, block);
                 }
+            }
+
+            foreach (var node in circuit.outputs)
+            {
+                if (!node.isActivated) continue;
+                Box box = new(node.pos, Node.dim);
+                if (player.IsIntersecting(box))
+                {
+                    CollideWithBox(old, box);
+                }
+            }
+
+            foreach (var node in circuit.nodes)
+            {
+                if (node.children.Length != 0) continue;
+                Box box = new(node.pos, Node.dim);
+                if (player.IsIntersecting(box) && Pressed(Keys.S) && !Down(Keys.S))
+                {
+                    node.isActivated = !node.isActivated;
+                    shadow[Keys.S] = true;
+                }
+            }
+        }
+
+        private static void CollideWithBox(Vector old, Box box)
+        {
+            Vector delta = box.pos - old;
+            float x = Math.Abs(delta.x);
+            float y = Math.Abs(delta.y);
+            if (x >= player.dim.x / 2 + box.dim.x / 2 && x > 0)
+            {
+                float dx = -delta.x / x;
+                player.pos.x = box.pos.x + dx * (box.dim.x / 2 + player.dim.x / 2);
+                player.vel.x = 0;
+            }
+            if (y >= player.dim.y / 2 + box.dim.y / 2 && y > 0)
+            {
+                float dy = -delta.y / y;
+                player.pos.y = box.pos.y + dy * (box.dim.y / 2 + player.dim.y / 2);
+                if (delta.y > 0)
+                {
+                    player.isGrounded = true;
+                }
+                player.vel.y = 0;
             }
         }
 
@@ -183,6 +224,11 @@ namespace Game
         private static void DrawBox(Graphics g, Vector pos, Vector dim)
         {
             g.FillRectangle(brush, pos.x, pos.y, dim.x, dim.y);
+        }
+
+        private static void DrawBoxOutline(Graphics g, Vector pos, Vector dim)
+        {
+            g.DrawRectangle(pen, pos.x, pos.y, dim.x, dim.y);
         }
 
         private void DrawImage(Graphics g, Vector pos, Vector dim)
@@ -203,6 +249,17 @@ namespace Game
         private void DrawEntity(Graphics g, Entity entity)
         {
             DrawImage(g, entity.pos, entity.dim);
+        }
+
+        private bool ActivateNode(Node node)
+        {
+            return node.children.Length switch
+            {
+                0 => node.isActivated,
+                1 => ActivateNode(circuit.nodes[node.children[0]]),
+                2 => Node.gates[node.gateName].eval(ActivateNode(circuit.nodes[node.children[0]]), ActivateNode(circuit.nodes[node.children[1]])),
+                _ => throw new Exception("Node contraception failed."),
+            };
         }
 
         private void DrawWorld(Graphics g)
@@ -226,6 +283,55 @@ namespace Game
                     block.isClose = false;
                 }
             }
+
+            foreach (var node in circuit.outputs)
+            {
+                Vector dim = Node.dim;
+                Vector pos = Offset(node.pos - dim / 2);
+                Vector p = Offset(circuit.nodes[node.children[0]].pos);
+                g.DrawLine(pen, pos.x + dim.x / 2, pos.y + dim.y / 2, p.x, p.y);
+                node.isActivated = ActivateNode(node);
+                if (node.isActivated)
+                {
+                    DrawBox(g, pos, dim);
+                }
+                else
+                {
+                    DrawBoxOutline(g, pos, dim);
+                }
+            }
+
+            foreach (var node in circuit.nodes)
+            {
+                Vector dim = Node.dim;
+                Vector pos = Offset(node.pos - dim / 2);
+                if (node.gateName == null)
+                {
+                    brush.Color = Color.White;
+                    pen.Color = Color.White;
+                }
+                else
+                {
+                    brush.Color = Node.gates[node.gateName].color;
+                    pen.Color = Node.gates[node.gateName].color;
+                }
+                foreach (var id in node.children)
+                {
+                    Vector p = Offset(circuit.nodes[id].pos);
+                    g.DrawLine(pen, pos.x + dim.x / 2, pos.y + dim.y / 2, p.x, p.y);
+                }
+                node.isActivated = ActivateNode(node);
+                if (node.isActivated)
+                {
+                    DrawBox(g, pos, dim);
+                }
+                else
+                {
+                    DrawBoxOutline(g, pos, dim);
+                }
+            }
+            brush.Color = Color.Black;
+            pen.Color = Color.Black;
         }
 
         private void OnCanvasPaint(object sender, PaintEventArgs e)
