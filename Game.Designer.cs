@@ -53,7 +53,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1008, 473);
+            this.ClientSize = new System.Drawing.Size(1008, 537);
             this.Controls.Add(this.canvas);
             this.Name = "Game";
             this.Text = "Game";

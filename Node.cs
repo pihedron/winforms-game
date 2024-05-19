@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Game
 {
-    public class Node
+    public class Node : ICloneable
     {
         public int[] children = Array.Empty<int>();
         public Vector pos;
@@ -44,6 +44,11 @@ namespace Game
             this.pos = pos;
             this.gateName = gateName;
             this.children = children;
+        }
+
+        public object Clone()
+        {
+            return MemberwiseClone();
         }
     }
 }

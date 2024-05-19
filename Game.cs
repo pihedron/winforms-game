@@ -17,7 +17,8 @@ namespace Game
         static Camera cam = new();
         static Vector view = new();
         static List<Block> world = new();
-        static Circuit circuit;
+        static readonly Circuit circuitTemplate = new();
+        static Circuit circuit = new();
 
         static int tick = 0;
 
@@ -41,23 +42,23 @@ namespace Game
                 world.Add(new Block(new Vector(values[0], values[1]), new Vector(values[2], values[3])));
             }
             string[] lines = File.ReadLines("../../../circuits.txt").ToArray();
-            circuit = new();
             for (int i = 0; i < lines.Length; i++)
             {
                 string[] values = lines[i].Split(' ');
                 switch (values[0])
                 {
                     case "SRC":
-                        circuit.nodes.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), int.Parse(values[3]) != 0));
+                        circuitTemplate.nodes.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), int.Parse(values[3]) != 0));
                         break;
                     case "BOX":
-                        circuit.outputs.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), values[3..].Select((string s) => int.Parse(s)).ToArray()));
+                        circuitTemplate.outputs.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), values[3..].Select((string s) => int.Parse(s)).ToArray()));
                         break;
                     default:
-                        circuit.nodes.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), values[0], values[3..].Select((string s) => int.Parse(s)).ToArray()));
+                        circuitTemplate.nodes.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), values[0], values[3..].Select((string s) => int.Parse(s)).ToArray()));
                         break;
                 }
             }
+            Reset();
         }
 
         private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -81,6 +82,18 @@ namespace Game
             return shadow.ContainsKey(key) && shadow[key];
         }
 
+        private void Reset()
+        {
+            player.pos = new();
+            player.vel = new();
+
+            circuit.outputs.Clear();
+            circuit.nodes.Clear();
+
+            circuitTemplate.outputs.ForEach((item) => circuit.outputs.Add((Node)item.Clone()));
+            circuitTemplate.nodes.ForEach((item) => circuit.nodes.Add((Node)item.Clone()));
+        }
+
         private void MovePlayer()
         {
             if (Pressed(Keys.D))
@@ -101,6 +114,12 @@ namespace Game
 
         private void Tick(object? sender, EventArgs e)
         {
+            // TESTING
+            if (Pressed(Keys.Escape))
+            {
+                Reset();
+            }
+
             Vector old = player.pos;
 
             MovePlayer();
