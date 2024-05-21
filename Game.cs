@@ -19,6 +19,7 @@ namespace Game
         static List<Block> world = new();
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
+        static Vector max = new(player.dim.x, player.dim.y);
 
         static int tick = 0;
 
@@ -39,7 +40,9 @@ namespace Game
             foreach (var line in File.ReadLines("../../../world.txt"))
             {
                 float[] values = line.Split(' ').Select((string val) => float.Parse(val)).ToArray();
-                world.Add(new Block(new Vector(values[0], values[1]), new Vector(values[2], values[3])));
+                Vector dim = new(values[2], values[3]);
+                world.Add(new Block(new Vector(values[0], values[1]), dim));
+                // set max dim vector
             }
             string[] lines = File.ReadLines("../../../circuits.txt").ToArray();
             for (int i = 0; i < lines.Length; i++)
