@@ -17,9 +17,11 @@ namespace Game
         static Camera cam = new();
         static Vector view = new();
         static List<Block> world = new();
+        static List<Block>[,] grid;
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
-        static Vector max = new(player.dim.x, player.dim.y);
+        static Vector posExt = new();
+        static Vector dimExt = new(player.dim.x, player.dim.y);
 
         static int tick = 0;
 
@@ -40,9 +42,27 @@ namespace Game
             foreach (var line in File.ReadLines("../../../world.txt"))
             {
                 float[] values = line.Split(' ').Select((string val) => float.Parse(val)).ToArray();
+                Vector pos = new(values[0], values[1]);
                 Vector dim = new(values[2], values[3]);
-                world.Add(new Block(new Vector(values[0], values[1]), dim));
-                // set max dim vector
+                world.Add(new(pos, dim));
+                posExt.x = Math.Max(posExt.x, pos.x);
+                posExt.y = Math.Min(posExt.y, pos.y);
+                dimExt.x = Math.Max(dimExt.x, dim.x);
+                dimExt.y = Math.Max(dimExt.y, dim.y);
+            }
+            int x = (int)(posExt.x / dimExt.x) + 1;
+            int y = (int)(posExt.y / dimExt.y) + 1;
+            grid = new List<Block>[x, y];
+            for (int i = 0; i < grid.GetLength(0); i++)
+            {
+                for (int j = 0; j < grid.GetLength(1); j++)
+                {
+                    grid[i, j] = new();
+                }
+            }
+            foreach (var block in world)
+            {
+                grid[(int)(block.pos.x / dimExt.x), (int)(-block.pos.y / dimExt.y)].Add(block);
             }
             string[] lines = File.ReadLines("../../../circuits.txt").ToArray();
             for (int i = 0; i < lines.Length; i++)
@@ -169,7 +189,16 @@ namespace Game
             }
         }
 
-        private static void HandleCollisions(Vector old)
+        private List<Block> GetZone(int x, int y)
+        {
+            if (0 <= x && x < grid.GetLength(0) && 0 <= y && y < grid.GetLength(1))
+            {
+                return grid[x, y];
+            }
+            return new();
+        }
+
+        private void HandleCollisions(Vector old)
         {
             player.isGrounded = false;
 
@@ -180,7 +209,19 @@ namespace Game
                 player.isGrounded = true;
             }
 
-            foreach (var block in world)
+            int x = (int)(player.pos.x / dimExt.x);
+            int y = (int)(-player.pos.y / dimExt.y);
+            List<Block> zones = GetZone(x, y)
+                .Concat(GetZone(x + 1, y))
+                .Concat(GetZone(x - 1, y))
+                .Concat(GetZone(x, y + 1))
+                .Concat(GetZone(x, y - 1))
+                .Concat(GetZone(x + 1, y + 1))
+                .Concat(GetZone(x + 1, y - 1))
+                .Concat(GetZone(x - 1, y + 1))
+                .Concat(GetZone(x - 1, y - 1))
+                .ToList();
+            foreach (var block in zones)
             {
                 if (block.isClose && player.IsIntersecting(block))
                 {
