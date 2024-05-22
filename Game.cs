@@ -42,9 +42,20 @@ namespace Game
             foreach (var line in File.ReadLines("../../../world.txt"))
             {
                 float[] values = line.Split(' ').Select((string val) => float.Parse(val)).ToArray();
+                Vector dim = new();
+                bool isDangerous = false;
+                switch (values.Length)
+                {
+                    case 3:
+                        dim = new(values[2], 32);
+                        isDangerous = true;
+                        break;
+                    case 4:
+                        dim = new(values[2], values[3]);
+                        break;
+                }
                 Vector pos = new(values[0], values[1]);
-                Vector dim = new(values[2], values[3]);
-                world.Add(new(pos, dim));
+                world.Add(new(pos, dim, isDangerous));
                 posExt.x = Math.Max(posExt.x, pos.x);
                 posExt.y = Math.Min(posExt.y, pos.y);
                 dimExt.x = Math.Max(dimExt.x, dim.x);
@@ -62,7 +73,8 @@ namespace Game
             }
             foreach (var block in world)
             {
-                grid[(int)(block.pos.x / dimExt.x), (int)(-block.pos.y / dimExt.y)].Add(block);
+                (int a, int b) = GetIndex(block.pos);
+                grid[a, b].Add(block);
             }
             string[] lines = File.ReadLines("../../../circuits.txt").ToArray();
             for (int i = 0; i < lines.Length; i++)
@@ -234,7 +246,14 @@ namespace Game
             {
                 if (block.isClose && player.IsIntersecting(block))
                 {
-                    CollideWithBox(old, block);
+                    if (block.isDangerous)
+                    {
+                        Reset();
+                    }
+                    else
+                    {
+                        CollideWithBox(old, block);
+                    }
                 }
             }
 
