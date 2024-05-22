@@ -189,6 +189,11 @@ namespace Game
             }
         }
 
+        private Tuple<int, int> GetIndex(Vector pos)
+        {
+            return new((int)(pos.x / dimExt.x), (int)(-pos.y / dimExt.y));
+        }
+
         private List<Block> GetZone(int x, int y)
         {
             if (0 <= x && x < grid.GetLength(0) && 0 <= y && y < grid.GetLength(1))
@@ -196,6 +201,19 @@ namespace Game
                 return grid[x, y];
             }
             return new();
+        }
+
+        private IEnumerable<Block> GetAdjacent(int x, int y)
+        {
+            return GetZone(x, y)
+                .Concat(GetZone(x + 1, y))
+                .Concat(GetZone(x - 1, y))
+                .Concat(GetZone(x, y + 1))
+                .Concat(GetZone(x, y - 1))
+                .Concat(GetZone(x + 1, y + 1))
+                .Concat(GetZone(x + 1, y - 1))
+                .Concat(GetZone(x - 1, y + 1))
+                .Concat(GetZone(x - 1, y - 1));
         }
 
         private void HandleCollisions(Vector old)
@@ -209,19 +227,10 @@ namespace Game
                 player.isGrounded = true;
             }
 
-            int x = (int)(player.pos.x / dimExt.x);
-            int y = (int)(-player.pos.y / dimExt.y);
-            List<Block> zones = GetZone(x, y)
-                .Concat(GetZone(x + 1, y))
-                .Concat(GetZone(x - 1, y))
-                .Concat(GetZone(x, y + 1))
-                .Concat(GetZone(x, y - 1))
-                .Concat(GetZone(x + 1, y + 1))
-                .Concat(GetZone(x + 1, y - 1))
-                .Concat(GetZone(x - 1, y + 1))
-                .Concat(GetZone(x - 1, y - 1))
-                .ToList();
-            foreach (var block in zones)
+            int x;
+            int y;
+            (x, y) = GetIndex(player.pos);
+            foreach (var block in GetAdjacent(x, y))
             {
                 if (block.isClose && player.IsIntersecting(block))
                 {
