@@ -61,9 +61,8 @@ namespace Game
                 dimExt.x = Math.Max(dimExt.x, dim.x);
                 dimExt.y = Math.Max(dimExt.y, dim.y);
             }
-            int x = (int)(posExt.x / dimExt.x) + 1;
-            int y = (int)(posExt.y / dimExt.y) + 1;
-            grid = new List<Block>[x, y];
+            (int x, int y) = GetIndex(posExt);
+            grid = new List<Block>[x + 1, y + 1];
             for (int i = 0; i < grid.GetLength(0); i++)
             {
                 for (int j = 0; j < grid.GetLength(1); j++)
@@ -76,6 +75,7 @@ namespace Game
                 (int a, int b) = GetIndex(block.pos);
                 grid[a, b].Add(block);
             }
+            world.Clear();
             string[] lines = File.ReadLines("../../../circuits.txt").ToArray();
             for (int i = 0; i < lines.Length; i++)
             {
@@ -361,20 +361,32 @@ namespace Game
                 g.FillRectangle(brush, 0, y, view.x, view.y - y); // infinite floor
             }
 
-            foreach (var block in world)
+            foreach (var blocks in grid)
             {
-                Vector pos = Offset(block.pos - block.dim / 2);
-                if (IntersectingTopLeft(pos, block.dim, new(), view))
+                foreach (var block in blocks)
                 {
-                    DrawBox(g, pos, block.dim);
-                    block.isClose = true;
-                }
-                else
-                {
-                    block.isClose = false;
+                    Vector pos = Offset(block.pos - block.dim / 2);
+                    if (IntersectingTopLeft(pos, block.dim, new(), view))
+                    {
+                        if (block.isDangerous)
+                        {
+                            brush.Color = Color.Red;
+                        }
+                        else
+                        {
+                            brush.Color = Color.Black;
+                        }
+                        DrawBox(g, pos, block.dim);
+                        block.isClose = true;
+                    }
+                    else
+                    {
+                        block.isClose = false;
+                    }
                 }
             }
 
+            brush.Color = Color.Black;
             foreach (var node in circuit.outputs)
             {
                 Vector dim = Node.dim;
