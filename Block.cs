@@ -10,12 +10,17 @@ namespace Game
     {
         public bool isClose = false;
         public bool isDangerous = false;
+        public Bitmap image;
 
-        public Block(Vector pos, Vector dim) : base(pos, dim) { }
+        public Block(Vector pos, Vector dim, string imagePath) : base(pos, dim)
+        {
+            image = new(imagePath);
+        }
 
-        public Block(Vector pos, Vector dim, bool isDangerous) : base(pos, dim)
+        public Block(Vector pos, Vector dim, string imagePath, bool isDangerous) : base(pos, dim)
         {
             this.isDangerous = isDangerous;
+            image = new(imagePath);
         }
     }
 }

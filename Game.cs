@@ -12,12 +12,13 @@ namespace Game
 
         const float friction = 0.25F;
         const float gravity = 1;
+        const int size = 64;
 
-        static Entity player = new(new Vector(), new Vector(32, 64), 2, 16, "player");
+        static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Vector view = new();
         static List<Block> world = new();
-        static List<Block>[,] grid;
+        static Block?[,] grid;
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
         static Vector posExt = new();
@@ -39,41 +40,32 @@ namespace Game
 
             // load assets
             player.GetFrames();
-            foreach (var line in File.ReadLines("../../../world.txt"))
-            {
-                float[] values = line.Split(' ').Select((string val) => float.Parse(val)).ToArray();
-                Vector dim = new();
-                bool isDangerous = false;
-                switch (values.Length)
-                {
-                    case 3:
-                        dim = new(values[2], 32);
-                        isDangerous = true;
-                        break;
-                    case 4:
-                        dim = new(values[2], values[3]);
-                        break;
-                }
-                Vector pos = new(values[0], values[1]);
-                world.Add(new(pos, dim, isDangerous));
-                posExt.x = Math.Max(posExt.x, pos.x);
-                posExt.y = Math.Min(posExt.y, pos.y);
-                dimExt.x = Math.Max(dimExt.x, dim.x);
-                dimExt.y = Math.Max(dimExt.y, dim.y);
-            }
-            (int x, int y) = GetIndex(posExt);
-            grid = new List<Block>[x + 1, y + 1];
+            var rows = File.ReadLines("../../../world.txt").ToArray();
+            grid = new Block[rows[0].Length, rows.Length];
             for (int i = 0; i < grid.GetLength(0); i++)
             {
                 for (int j = 0; j < grid.GetLength(1); j++)
                 {
-                    grid[i, j] = new();
+                    grid[i, j] = null;
                 }
             }
-            foreach (var block in world)
+            for (int y = 0; y < rows.Length; y++)
             {
-                (int a, int b) = GetIndex(block.pos);
-                grid[a, b].Add(block);
+                char[] chars = rows[y].ToCharArray();
+                for (int x = 0; x < chars.Length; x++)
+                {
+                    Vector dim = new(size, size);
+                    switch (chars[x])
+                    {
+                        case '#':
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, "../../../img/spike/spike.png");
+                            break;
+                        case '^':
+                            dim = new(size, size / 2);
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2 + new Vector(0, size / 2), dim, "../../../img/spike/spike.png", true);
+                            break;
+                    }
+                }
             }
             world.Clear();
             string[] lines = File.ReadLines("../../../circuits.txt").ToArray();
@@ -203,29 +195,36 @@ namespace Game
 
         private Tuple<int, int> GetIndex(Vector pos)
         {
-            return new((int)(pos.x / dimExt.x), (int)(-pos.y / dimExt.y));
+            return new((int)pos.x / size, (int)pos.y / size + grid.GetLength(1));
         }
 
-        private List<Block> GetZone(int x, int y)
+        private Vector GetPosition(int x, int y)
+        {
+            return new(x * size, (y - grid.GetLength(1)) * size);
+        }
+
+        private Block GetZone(int x, int y)
         {
             if (0 <= x && x < grid.GetLength(0) && 0 <= y && y < grid.GetLength(1))
             {
                 return grid[x, y];
             }
-            return new();
+            return null;
         }
 
-        private IEnumerable<Block> GetAdjacent(int x, int y)
+        private Block[] GetAdjacent(int x, int y)
         {
-            return GetZone(x, y)
-                .Concat(GetZone(x + 1, y))
-                .Concat(GetZone(x - 1, y))
-                .Concat(GetZone(x, y + 1))
-                .Concat(GetZone(x, y - 1))
-                .Concat(GetZone(x + 1, y + 1))
-                .Concat(GetZone(x + 1, y - 1))
-                .Concat(GetZone(x - 1, y + 1))
-                .Concat(GetZone(x - 1, y - 1));
+            return new[] {
+                GetZone(x, y),
+                GetZone(x + 1, y),
+                GetZone(x - 1, y),
+                GetZone(x, y + 1),
+                GetZone(x, y - 1),
+                GetZone(x + 1, y + 1),
+                GetZone(x + 1, y - 1),
+                GetZone(x - 1, y + 1),
+                GetZone(x - 1, y - 1),
+            };
         }
 
         private void HandleCollisions(Vector old)
@@ -244,7 +243,7 @@ namespace Game
             (x, y) = GetIndex(player.pos);
             foreach (var block in GetAdjacent(x, y))
             {
-                if (block.isClose && player.IsIntersecting(block))
+                if (block != null && block.isClose && player.IsIntersecting(block))
                 {
                     if (block.isDangerous)
                     {
@@ -284,13 +283,16 @@ namespace Game
             Vector delta = box.pos - old;
             float x = Math.Abs(delta.x);
             float y = Math.Abs(delta.y);
-            if (x >= player.dim.x / 2 + box.dim.x / 2 && x > 0)
+
+            bool xc = x >= player.dim.x / 2 + box.dim.x / 2 && x > 0;
+            bool yc = y >= player.dim.y / 2 + box.dim.y / 2 && y > 0;
+            if (xc)
             {
                 float dx = -delta.x / x;
                 player.pos.x = box.pos.x + dx * (box.dim.x / 2 + player.dim.x / 2);
                 player.vel.x = 0;
             }
-            if (y >= player.dim.y / 2 + box.dim.y / 2 && y > 0)
+            else if (yc)
             {
                 float dy = -delta.y / y;
                 player.pos.y = box.pos.y + dy * (box.dim.y / 2 + player.dim.y / 2);
@@ -322,24 +324,30 @@ namespace Game
             g.DrawRectangle(pen, pos.x, pos.y, dim.x, dim.y);
         }
 
-        private void DrawImage(Graphics g, Vector pos, Vector dim)
+        private void DrawAnimatedImage(Graphics g, Vector pos, Vector dim)
         {
             Bitmap[] frames = player.stateFrames[player.state];
             player.frameIndex %= frames.Length;
             Bitmap frame = frames[player.frameIndex];
-            Vector v = Offset(new(pos.x - frame.Width / 2, pos.y - frame.Height + dim.y / 2));
+            Vector vec = Offset(new(pos.x - frame.Width / 2, pos.y - frame.Height + dim.y / 2));
             Bitmap bitmap = (Bitmap)frame.Clone();
             if (player.isFacingLeft)
             {
                 bitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
             }
-            g.DrawImage(bitmap, v.x, v.y, bitmap.Width, bitmap.Height);
+            g.DrawImage(bitmap, vec.x, vec.y, bitmap.Width, bitmap.Height);
             bitmap.Dispose();
+        }
+
+        private void DrawBlock(Graphics g, Block block)
+        {
+            Vector pos = Offset(block.pos - block.dim / 2);
+            g.DrawImage(block.image, pos.x, pos.y, block.image.Width, block.image.Height);
         }
 
         private void DrawEntity(Graphics g, Entity entity)
         {
-            DrawImage(g, entity.pos, entity.dim);
+            DrawAnimatedImage(g, entity.pos, entity.dim);
         }
 
         private bool ActivateNode(Node node)
@@ -361,28 +369,25 @@ namespace Game
                 g.FillRectangle(brush, 0, y, view.x, view.y - y); // infinite floor
             }
 
-            foreach (var blocks in grid)
+            foreach (var block in grid)
             {
-                foreach (var block in blocks)
+                if (block == null) continue;
+                Vector pos = Offset(block.pos - block.dim / 2);
+                if (IntersectingTopLeft(pos, block.dim, new(), view))
                 {
-                    Vector pos = Offset(block.pos - block.dim / 2);
-                    if (IntersectingTopLeft(pos, block.dim, new(), view))
+                    if (block.isDangerous)
                     {
-                        if (block.isDangerous)
-                        {
-                            brush.Color = Color.Red;
-                        }
-                        else
-                        {
-                            brush.Color = Color.Black;
-                        }
-                        DrawBox(g, pos, block.dim);
-                        block.isClose = true;
+                        DrawBlock(g, block);
                     }
                     else
                     {
-                        block.isClose = false;
+                        DrawBox(g, pos, block.dim);
                     }
+                    block.isClose = true;
+                }
+                else
+                {
+                    block.isClose = false;
                 }
             }
 
