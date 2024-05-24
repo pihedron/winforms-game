@@ -25,7 +25,7 @@ namespace Game
             }
         };
         public static int size = 32;
-        public static Vector dim = new(size, size);
+        public Vector dim = new(size, size);
 
         public Node(Vector pos, int[] children)
         {

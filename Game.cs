@@ -21,8 +21,6 @@ namespace Game
         static Block?[,] grid;
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
-        static Vector posExt = new();
-        static Vector dimExt = new(player.dim.x, player.dim.y);
 
         static int tick = 0;
 
@@ -72,16 +70,19 @@ namespace Game
             for (int i = 0; i < lines.Length; i++)
             {
                 string[] values = lines[i].Split(' ');
+                Vector pos = new Vector(float.Parse(values[1]), float.Parse(values[2])) * size + new Vector(size, size) / 2;
                 switch (values[0])
                 {
                     case "SRC":
-                        circuitTemplate.nodes.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), int.Parse(values[3]) != 0));
+                        circuitTemplate.nodes.Add(new Node(pos, int.Parse(values[3]) != 0));
                         break;
                     case "BOX":
-                        circuitTemplate.outputs.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), values[3..].Select((string s) => int.Parse(s)).ToArray()));
+                        Node node = new Node(pos, values[3..].Select((string s) => int.Parse(s)).ToArray());
+                        node.dim = new(size, size);
+                        circuitTemplate.outputs.Add(node);
                         break;
                     default:
-                        circuitTemplate.nodes.Add(new Node(new(float.Parse(values[1]), float.Parse(values[2])), values[0], values[3..].Select((string s) => int.Parse(s)).ToArray()));
+                        circuitTemplate.nodes.Add(new Node(pos, values[0], values[3..].Select((string s) => int.Parse(s)).ToArray()));
                         break;
                 }
             }
@@ -195,7 +196,7 @@ namespace Game
 
         private Tuple<int, int> GetIndex(Vector pos)
         {
-            return new((int)pos.x / size, (int)pos.y / size + grid.GetLength(1));
+            return new((int)(pos.x / size), (int)(pos.y / size + grid.GetLength(1)));
         }
 
         private Vector GetPosition(int x, int y)
@@ -203,7 +204,7 @@ namespace Game
             return new(x * size, (y - grid.GetLength(1)) * size);
         }
 
-        private Block GetZone(int x, int y)
+        private Block? GetZone(int x, int y)
         {
             if (0 <= x && x < grid.GetLength(0) && 0 <= y && y < grid.GetLength(1))
             {
@@ -212,7 +213,7 @@ namespace Game
             return null;
         }
 
-        private Block[] GetAdjacent(int x, int y)
+        private Block?[] GetAdjacent(int x, int y)
         {
             return new[] {
                 GetZone(x, y),
@@ -238,9 +239,7 @@ namespace Game
                 player.isGrounded = true;
             }
 
-            int x;
-            int y;
-            (x, y) = GetIndex(player.pos);
+            (int x, int y) = GetIndex(player.pos);
             foreach (var block in GetAdjacent(x, y))
             {
                 if (block != null && block.isClose && player.IsIntersecting(block))
@@ -259,7 +258,7 @@ namespace Game
             foreach (var node in circuit.outputs)
             {
                 if (!node.isActivated) continue;
-                Box box = new(node.pos, Node.dim);
+                Box box = new(node.pos, node.dim);
                 if (player.IsIntersecting(box))
                 {
                     CollideWithBox(old, box);
@@ -269,7 +268,7 @@ namespace Game
             foreach (var node in circuit.nodes)
             {
                 if (node.children.Length != 0) continue;
-                Box box = new(node.pos, Node.dim);
+                Box box = new(node.pos, node.dim);
                 if (player.IsIntersecting(box) && Pressed(Keys.S) && !Down(Keys.S))
                 {
                     node.isActivated = !node.isActivated;
@@ -284,15 +283,14 @@ namespace Game
             float x = Math.Abs(delta.x);
             float y = Math.Abs(delta.y);
 
-            bool xc = x >= player.dim.x / 2 + box.dim.x / 2 && x > 0;
-            bool yc = y >= player.dim.y / 2 + box.dim.y / 2 && y > 0;
-            if (xc)
+            if (x >= player.dim.x / 2 + box.dim.x / 2 && x > 0)
             {
                 float dx = -delta.x / x;
                 player.pos.x = box.pos.x + dx * (box.dim.x / 2 + player.dim.x / 2);
                 player.vel.x = 0;
             }
-            else if (yc)
+
+            if (y >= player.dim.y / 2 + box.dim.y / 2 && y > 0)
             {
                 float dy = -delta.y / y;
                 player.pos.y = box.pos.y + dy * (box.dim.y / 2 + player.dim.y / 2);
@@ -394,11 +392,12 @@ namespace Game
             brush.Color = Color.Black;
             foreach (var node in circuit.outputs)
             {
-                Vector dim = Node.dim;
+                Vector dim = node.dim;
                 Vector pos = Offset(node.pos - dim / 2);
                 Vector p = Offset(circuit.nodes[node.children[0]].pos);
                 g.DrawLine(pen, pos.x + dim.x / 2, pos.y + dim.y / 2, p.x, p.y);
-                node.isActivated = ActivateNode(node);
+                Box box = new(node.pos, node.dim);
+                node.isActivated = ActivateNode(node) && !player.IsIntersecting(box);
                 if (node.isActivated)
                 {
                     DrawBox(g, pos, dim);
@@ -411,7 +410,7 @@ namespace Game
 
             foreach (var node in circuit.nodes)
             {
-                Vector dim = Node.dim;
+                Vector dim = node.dim;
                 Vector pos = Offset(node.pos - dim / 2);
                 if (node.gateName == null)
                 {
