@@ -8,7 +8,7 @@ namespace Game
         static Dictionary<Keys, bool> kb = new();
         static Dictionary<Keys, bool> shadow = new();
         static SolidBrush brush = new(Color.Black);
-        static Pen pen = new(Color.Black);
+        static Pen pen = new(Color.Black, 2);
 
         const float friction = 0.25F;
         const float gravity = 1;
@@ -21,12 +21,16 @@ namespace Game
         static Block?[,] grid;
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
+        static Dialogue dialogue = new("");
 
         static int tick = 0;
 
         public Game()
         {
             InitializeComponent();
+
+            // draw settings
+            pen.Alignment = System.Drawing.Drawing2D.PenAlignment.Inset;
 
             // fullscreen settings
             canvas.Dock = DockStyle.Fill;
@@ -268,8 +272,7 @@ namespace Game
             foreach (var node in circuit.nodes)
             {
                 if (node.children.Length != 0) continue;
-                Box box = new(node.pos, node.dim);
-                if (player.IsIntersecting(box) && Pressed(Keys.S) && !Down(Keys.S))
+                if (player.IsIntersecting(node.pos, node.dim) && Pressed(Keys.S) && !Down(Keys.S))
                 {
                     node.isActivated = !node.isActivated;
                     shadow[Keys.S] = true;
@@ -416,6 +419,10 @@ namespace Game
                 {
                     brush.Color = Color.White;
                     pen.Color = Color.White;
+                    if (player.IsIntersecting(node.pos, node.dim))
+                    {
+                        dialogue.text = "[S] flip switch";
+                    }
                 }
                 else
                 {
@@ -444,10 +451,11 @@ namespace Game
         private void OnCanvasPaint(object sender, PaintEventArgs e)
         {
             e.Graphics.Clear(Color.Gray);
-            DrawWorld(e.Graphics);
-            brush.Color = Color.Blue;
-            DrawEntity(e.Graphics, player);
+            dialogue.text = "";
             brush.Color = Color.Black;
+            DrawWorld(e.Graphics);
+            DrawEntity(e.Graphics, player);
+            dialogue.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
         }
 
         private void AdjustView()
