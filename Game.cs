@@ -70,6 +70,12 @@ namespace Game
                         case '[':
                             spawn = GetPosition(x, y) + dim / 2;
                             break;
+                        case ']':
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, "../../../img/spike/spike.png")
+                            {
+                                isEnd = true
+                            };
+                            break;
                     }
                 }
             }
@@ -257,6 +263,10 @@ namespace Game
                     {
                         player.isDying = true;
                         break;
+                    }
+                    else if (block.isEnd)
+                    {
+                        Reset();
                     }
                     else
                     {
