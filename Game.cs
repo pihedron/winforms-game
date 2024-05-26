@@ -22,6 +22,7 @@ namespace Game
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
         static Dialogue dialogue = new("");
+        static Vector spawn;
 
         static int tick = 0;
 
@@ -65,6 +66,9 @@ namespace Game
                         case '^':
                             dim = new(size, size / 2);
                             grid[x, y] = new(GetPosition(x, y) + dim / 2 + new Vector(0, size / 2), dim, "../../../img/spike/spike.png", true);
+                            break;
+                        case '[':
+                            spawn = GetPosition(x, y) + dim / 2;
                             break;
                     }
                 }
@@ -116,8 +120,10 @@ namespace Game
 
         private void Reset()
         {
-            player.pos = new();
+            player.isDying = false;
+            player.pos = spawn;
             player.vel = new();
+            player.isGrounded = false;
 
             circuit.outputs.Clear();
             circuit.nodes.Clear();
@@ -146,8 +152,7 @@ namespace Game
 
         private void Tick(object? sender, EventArgs e)
         {
-            // TESTING
-            if (Pressed(Keys.Escape))
+            if (Pressed(Keys.Escape) || player.isDying)
             {
                 Reset();
             }
@@ -246,11 +251,12 @@ namespace Game
             (int x, int y) = GetIndex(player.pos);
             foreach (var block in GetAdjacent(x, y))
             {
-                if (block != null && block.isClose && player.IsIntersecting(block))
+                if (block != null && player.IsIntersecting(block))
                 {
                     if (block.isDangerous)
                     {
-                        Reset();
+                        player.isDying = true;
+                        break;
                     }
                     else
                     {
@@ -384,11 +390,6 @@ namespace Game
                     {
                         DrawBox(g, pos, block.dim);
                     }
-                    block.isClose = true;
-                }
-                else
-                {
-                    block.isClose = false;
                 }
             }
 

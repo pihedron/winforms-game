@@ -18,6 +18,7 @@ namespace Game
         public Vector vel = new(0, 0);
 
         public bool isGrounded = false;
+        public bool isDying = false;
 
         public float movePower;
         public float jumpHeight;

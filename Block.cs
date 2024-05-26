@@ -8,7 +8,6 @@ namespace Game
 {
     public class Block : Box
     {
-        public bool isClose = false;
         public bool isDangerous = false;
         public Bitmap image;
 
