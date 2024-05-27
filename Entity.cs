@@ -42,7 +42,7 @@ namespace Game
             foreach (var stateValue in Enum.GetValues(typeof(EntityState)).Cast<EntityState>())
             {
                 List<Bitmap> frames = new();
-                foreach (var file in Directory.EnumerateFiles($"../../../img/{name}/{stateValue.ToString().ToLower()}"))
+                foreach (var file in Directory.EnumerateFiles($"{Game.prefix}img/{name}/{stateValue.ToString().ToLower()}"))
                 {
                     frames.Add(new(file));
                 }

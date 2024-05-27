@@ -1,3 +1,4 @@
+using System.Net.NetworkInformation;
 using System.Windows.Forms;
 using System.Xml.Linq;
 
@@ -14,10 +15,12 @@ namespace Game
         const float gravity = 1;
         const int size = 64;
 
+        public const string prefix = "../../../";
+
+        static int level = 0;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Vector view = new();
-        static List<Block> world = new();
         static Block?[,] grid;
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
@@ -43,7 +46,15 @@ namespace Game
 
             // load assets
             player.GetFrames();
-            var rows = File.ReadLines("../../../world.txt").ToArray();
+
+            // create world
+            LoadLevel();
+            Reset();
+        }
+
+        private void LoadLevel()
+        {
+            var rows = File.ReadLines($"{prefix}/lvl/{level}/world.txt").ToArray();
             grid = new Block[rows[0].Length, rows.Length];
             for (int i = 0; i < grid.GetLength(0); i++)
             {
@@ -61,17 +72,18 @@ namespace Game
                     switch (chars[x])
                     {
                         case '#':
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, "../../../img/spike/spike.png");
+                            string tileName = $"{new string(GetTileVariant(rows, x, y))}.png";
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/{tileName}");
                             break;
                         case '^':
                             dim = new(size, size / 2);
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2 + new Vector(0, size / 2), dim, "../../../img/spike/spike.png", true);
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2 + new Vector(0, size / 2), dim, $"{prefix}img/block/spike.png", true);
                             break;
                         case '[':
                             spawn = GetPosition(x, y) + dim / 2;
                             break;
                         case ']':
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, "../../../img/spike/spike.png")
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
                             {
                                 isEnd = true
                             };
@@ -79,8 +91,9 @@ namespace Game
                     }
                 }
             }
-            world.Clear();
-            string[] lines = File.ReadLines("../../../circuits.txt").ToArray();
+            circuitTemplate.nodes.Clear();
+            circuitTemplate.outputs.Clear();
+            string[] lines = File.ReadLines($"{prefix}/lvl/{level}/circuits.txt").ToArray();
             for (int i = 0; i < lines.Length; i++)
             {
                 string[] values = lines[i].Split(' ');
@@ -91,8 +104,10 @@ namespace Game
                         circuitTemplate.nodes.Add(new Node(pos, int.Parse(values[3]) != 0));
                         break;
                     case "BOX":
-                        Node node = new Node(pos, values[3..].Select((string s) => int.Parse(s)).ToArray());
-                        node.dim = new(size, size);
+                        Node node = new(pos, values[3..].Select((string s) => int.Parse(s)).ToArray())
+                        {
+                            dim = new(size, size)
+                        };
                         circuitTemplate.outputs.Add(node);
                         break;
                     default:
@@ -100,7 +115,28 @@ namespace Game
                         break;
                 }
             }
-            Reset();
+        }
+
+        private char GetChar(string[] rows, int x , int y)
+        {
+            if (0 <= x && x < rows[0].Length && 0 <= y && y < rows.Length)
+            {
+                return rows[y][x];
+            }
+            return ' ';
+        }
+
+        private char[] GetTileVariant(string[] rows, int x, int y)
+        {
+            char[] adj = new char[4]
+            {
+                GetChar(rows, x - 1, y),
+                GetChar(rows, x + 1, y),
+                GetChar(rows, x, y - 1),
+                GetChar(rows, x, y + 1),
+            };
+
+            return adj.Select((char c) => c == '#' ? '1' : '0').ToArray();
         }
 
         private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -266,7 +302,14 @@ namespace Game
                     }
                     else if (block.isEnd)
                     {
-                        Reset();
+                        dialogue.text = "[S] next level";
+                        if (Pressed(Keys.S))
+                        {
+                            level++;
+                            LoadLevel();
+                            Reset();
+                            break;
+                        }
                     }
                     else
                     {
@@ -398,7 +441,8 @@ namespace Game
                     }
                     else
                     {
-                        DrawBox(g, pos, block.dim);
+                        DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
+                        DrawBlock(g, block);
                     }
                 }
             }
@@ -462,11 +506,11 @@ namespace Game
         private void OnCanvasPaint(object sender, PaintEventArgs e)
         {
             e.Graphics.Clear(Color.Gray);
-            dialogue.text = "";
             brush.Color = Color.Black;
             DrawWorld(e.Graphics);
             DrawEntity(e.Graphics, player);
             dialogue.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
+            dialogue.text = "";
         }
 
         private void AdjustView()
