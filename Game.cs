@@ -72,8 +72,8 @@ namespace Game
                     switch (chars[x])
                     {
                         case '#':
-                            //string tileName = $"{new string(GetTileVariant(rows, x, y))}.png";
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png");
+                            string tileName = $"{new string(GetTileVariant(rows, x, y))}.png";
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/{tileName}");
                             break;
                         case '^':
                             dim = new(size, size / 2);
