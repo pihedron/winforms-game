@@ -25,7 +25,7 @@ namespace Game
             },
             {
                 "XOR",
-                (Color.MediumPurple, (bool a, bool b) => a ^ b)
+                (Color.RebeccaPurple, (bool a, bool b) => a ^ b)
             },
         };
         public static int size = 32;

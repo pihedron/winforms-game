@@ -17,7 +17,7 @@ namespace Game
 
         public const string prefix = "../../../";
 
-        static int level = 2;
+        static int level = 0;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Vector view = new();
@@ -26,7 +26,8 @@ namespace Game
         static Circuit circuit = new();
         static Dialogue dialogue = new("");
         static Vector spawn;
-        static bool circuitNeedsUpdate = true;
+        static bool interferenceExists = false;
+        static int lastFlipped = -1;
 
         static int tick = 0;
 
@@ -174,7 +175,7 @@ namespace Game
             circuitTemplate.outputs.ForEach((item) => circuit.outputs.Add((Node)item.Clone()));
             circuitTemplate.nodes.ForEach((item) => circuit.nodes.Add((Node)item.Clone()));
 
-            circuitNeedsUpdate = true;
+            lastFlipped = 0;
         }
 
         private void MovePlayer()
@@ -323,24 +324,33 @@ namespace Game
 
             foreach (var node in circuit.outputs)
             {
-                if (!node.isActivated) continue;
                 Box box = new(node.pos, node.dim);
                 if (player.IsIntersecting(box))
                 {
-                    CollideWithBox(old, box);
+                    if (node.isActivated)
+                    {
+                        CollideWithBox(old, box);
+                    }
+                    else
+                    {
+                        interferenceExists = true;
+                    }
                 }
             }
 
-            foreach (var node in circuit.nodes)
+            for (int i = 0; i < circuit.nodes.Count; i++)
             {
+                Node node = circuit.nodes[i];
                 if (node.children.Length != 0) continue;
-                if (player.IsIntersecting(node.pos, node.dim) && Pressed(Keys.S) && !Down(Keys.S))
+                if (player.IsIntersecting(node.pos, node.dim) && Pressed(Keys.S) && !Down(Keys.S) && !interferenceExists)
                 {
                     node.isActivated = !node.isActivated;
                     shadow[Keys.S] = true;
-                    circuitNeedsUpdate = true;
+                    lastFlipped = i;
                 }
             }
+
+            interferenceExists = false;
         }
 
         private static void CollideWithBox(Vector old, Box box)
@@ -433,24 +443,6 @@ namespace Game
                 g.FillRectangle(brush, 0, y, view.x, view.y - y); // infinite floor
             }
 
-            foreach (var block in grid)
-            {
-                if (block == null) continue;
-                Vector pos = Offset(block.pos - block.dim / 2);
-                if (IntersectingTopLeft(pos, block.dim, new(), view))
-                {
-                    if (block.isDangerous)
-                    {
-                        DrawBlock(g, block);
-                    }
-                    else
-                    {
-                        DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
-                        DrawBlock(g, block);
-                    }
-                }
-            }
-
             brush.Color = Color.Black;
             foreach (var node in circuit.outputs)
             {
@@ -458,10 +450,9 @@ namespace Game
                 Vector pos = Offset(node.pos - dim / 2);
                 Vector p = Offset(circuit.nodes[node.children[0]].pos);
                 g.DrawLine(pen, pos.x + dim.x / 2, pos.y + dim.y / 2, p.x, p.y);
-                Box box = new(node.pos, node.dim);
-                if (circuitNeedsUpdate)
+                if (lastFlipped >= 0)
                 {
-                    node.isActivated = ActivateNode(node) && !player.IsIntersecting(box);
+                    node.isActivated = ActivateNode(node);
                 }
                 if (node.isActivated)
                 {
@@ -472,7 +463,7 @@ namespace Game
                     DrawBoxOutline(g, pos, dim);
                 }
             }
-            circuitNeedsUpdate = false;
+            lastFlipped = -1;
 
             foreach (var node in circuit.nodes)
             {
@@ -494,6 +485,7 @@ namespace Game
                     if (player.IsIntersecting(node.pos, node.dim))
                     {
                         dialogue.text = node.gateName;
+                        dialogue.brush.Color = brush.Color;
                     }
                 }
                 foreach (var id in node.children)
@@ -513,6 +505,24 @@ namespace Game
             }
             brush.Color = Color.Black;
             pen.Color = Color.Black;
+
+            foreach (var block in grid)
+            {
+                if (block == null) continue;
+                Vector pos = Offset(block.pos - block.dim / 2);
+                if (IntersectingTopLeft(pos, block.dim, new(), view))
+                {
+                    if (block.isDangerous)
+                    {
+                        DrawBlock(g, block);
+                    }
+                    else
+                    {
+                        DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
+                        DrawBlock(g, block);
+                    }
+                }
+            }
         }
 
         private void OnCanvasPaint(object sender, PaintEventArgs e)
@@ -523,6 +533,7 @@ namespace Game
             DrawEntity(e.Graphics, player);
             dialogue.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
             dialogue.text = "";
+            dialogue.brush.Color = Dialogue.defaultColor;
         }
 
         private void AdjustView()

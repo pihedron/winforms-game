@@ -12,7 +12,8 @@ namespace Game
         public PrivateFontCollection pfc = new();
         public FontFamily ff;
         public Font font;
-        public SolidBrush brush = new(Color.White);
+        public static Color defaultColor = Color.LightGreen;
+        public SolidBrush brush = new(defaultColor);
         public string text;
         public Dialogue(string text)
         {
