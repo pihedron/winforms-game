@@ -17,7 +17,7 @@ namespace Game
 
         public const string prefix = "../../../";
 
-        static int level = 0;
+        static int level = 2;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Vector view = new();
@@ -26,6 +26,7 @@ namespace Game
         static Circuit circuit = new();
         static Dialogue dialogue = new("");
         static Vector spawn;
+        static bool circuitNeedsUpdate = true;
 
         static int tick = 0;
 
@@ -172,6 +173,8 @@ namespace Game
 
             circuitTemplate.outputs.ForEach((item) => circuit.outputs.Add((Node)item.Clone()));
             circuitTemplate.nodes.ForEach((item) => circuit.nodes.Add((Node)item.Clone()));
+
+            circuitNeedsUpdate = true;
         }
 
         private void MovePlayer()
@@ -335,6 +338,7 @@ namespace Game
                 {
                     node.isActivated = !node.isActivated;
                     shadow[Keys.S] = true;
+                    circuitNeedsUpdate = true;
                 }
             }
         }
@@ -455,7 +459,10 @@ namespace Game
                 Vector p = Offset(circuit.nodes[node.children[0]].pos);
                 g.DrawLine(pen, pos.x + dim.x / 2, pos.y + dim.y / 2, p.x, p.y);
                 Box box = new(node.pos, node.dim);
-                node.isActivated = ActivateNode(node) && !player.IsIntersecting(box);
+                if (circuitNeedsUpdate)
+                {
+                    node.isActivated = ActivateNode(node) && !player.IsIntersecting(box);
+                }
                 if (node.isActivated)
                 {
                     DrawBox(g, pos, dim);
@@ -465,6 +472,7 @@ namespace Game
                     DrawBoxOutline(g, pos, dim);
                 }
             }
+            circuitNeedsUpdate = false;
 
             foreach (var node in circuit.nodes)
             {
@@ -483,6 +491,10 @@ namespace Game
                 {
                     brush.Color = Node.gates[node.gateName].color;
                     pen.Color = Node.gates[node.gateName].color;
+                    if (player.IsIntersecting(node.pos, node.dim))
+                    {
+                        dialogue.text = node.gateName;
+                    }
                 }
                 foreach (var id in node.children)
                 {

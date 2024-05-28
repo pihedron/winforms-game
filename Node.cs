@@ -22,7 +22,11 @@ namespace Game
             {
                 "OR",
                 (Color.Red, (bool a, bool b) => a || b)
-            }
+            },
+            {
+                "XOR",
+                (Color.MediumPurple, (bool a, bool b) => a ^ b)
+            },
         };
         public static int size = 32;
         public Vector dim = new(size, size);
