@@ -435,7 +435,13 @@ namespace Game
                 Vector pos = Offset(block.pos - block.dim / 2);
                 if (IntersectingTopLeft(pos, block.dim, new(), view))
                 {
-                    if (block.isDangerous)
+                    if (block.isEnd)
+                    {
+                        brush.Color = Color.Green;
+                        DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
+                        brush.Color = Color.Black;
+                    }
+                    else if (block.isDangerous)
                     {
                         DrawBlock(g, block);
                     }
