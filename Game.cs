@@ -83,7 +83,7 @@ namespace Game
                             spawn = GetPosition(x, y) + dim / 2;
                             break;
                         case ']':
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/end.png")
                             {
                                 isEnd = true
                             };
@@ -435,13 +435,7 @@ namespace Game
                 Vector pos = Offset(block.pos - block.dim / 2);
                 if (IntersectingTopLeft(pos, block.dim, new(), view))
                 {
-                    if (block.isEnd)
-                    {
-                        brush.Color = Color.Green;
-                        DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
-                        brush.Color = Color.Black;
-                    }
-                    else if (block.isDangerous)
+                    if (block.isDangerous)
                     {
                         DrawBlock(g, block);
                     }
