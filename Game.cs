@@ -149,7 +149,7 @@ namespace Game
         private void OnKeyUp(object? sender, KeyEventArgs e)
         {
             kb[e.KeyCode] = false;
-            shadow[Keys.S] = false;
+            shadow[Keys.Space] = false;
         }
 
         private static bool Pressed(Keys key)
@@ -180,17 +180,17 @@ namespace Game
 
         private void MovePlayer()
         {
-            if (Pressed(Keys.D))
+            if (Pressed(Keys.D) || Pressed(Keys.Right))
             {
                 player.vel.x += player.movePower;
             }
 
-            if (Pressed(Keys.A))
+            if (Pressed(Keys.A) || Pressed(Keys.Left))
             {
                 player.vel.x -= player.movePower;
             }
 
-            if (Pressed(Keys.W) && player.isGrounded)
+            if ((Pressed(Keys.W) || Pressed(Keys.Up)) && player.isGrounded)
             {
                 player.vel.y = -player.jumpHeight;
             }
@@ -306,8 +306,8 @@ namespace Game
                     }
                     else if (block.isEnd)
                     {
-                        dialogue.text = "[S] next level";
-                        if (Pressed(Keys.S))
+                        dialogue.text = "[SPACE] next level";
+                        if (Pressed(Keys.Space))
                         {
                             level++;
                             LoadLevel();
@@ -342,10 +342,10 @@ namespace Game
             {
                 Node node = circuit.nodes[i];
                 if (node.children.Length != 0) continue;
-                if (player.IsIntersecting(node.pos, node.dim) && Pressed(Keys.S) && !Down(Keys.S) && !interferenceExists)
+                if (player.IsIntersecting(node.pos, node.dim) && Pressed(Keys.Space) && !Down(Keys.Space) && !interferenceExists)
                 {
                     node.isActivated = !node.isActivated;
-                    shadow[Keys.S] = true;
+                    shadow[Keys.Space] = true;
                     lastFlipped = i;
                 }
             }
@@ -475,7 +475,7 @@ namespace Game
                     pen.Color = Color.White;
                     if (player.IsIntersecting(node.pos, node.dim))
                     {
-                        dialogue.text = "[S] flip switch";
+                        dialogue.text = "[SPACE] flip switch";
                     }
                 }
                 else
