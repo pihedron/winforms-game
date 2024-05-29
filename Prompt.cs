@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Game
 {
-    public class Dialogue
+    public class Prompt
     {
         public PrivateFontCollection pfc = new();
         public FontFamily ff;
@@ -15,7 +15,7 @@ namespace Game
         public static Color defaultColor = Color.LightGreen;
         public SolidBrush brush = new(defaultColor);
         public string text;
-        public Dialogue(string text)
+        public Prompt(string text)
         {
             pfc.AddFontFile("../../../font/font.ttf");
             ff = new("Pixel Operator 8", pfc);

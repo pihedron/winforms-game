@@ -24,8 +24,9 @@ namespace Game
         static Block?[,] grid;
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
-        static Dialogue dialogue = new("");
+        static Prompt dialogue = new("");
         static Vector spawn;
+        static bool paused = false;
         static bool interferenceExists = false;
         static int lastFlipped = -1;
 
@@ -198,7 +199,11 @@ namespace Game
 
         private void Tick(object? sender, EventArgs e)
         {
-            if (Pressed(Keys.Escape) || player.isDying)
+            if (Pressed(Keys.Escape)) paused = true;
+
+            if (paused) return;
+
+            if (player.isDying)
             {
                 Reset();
             }
@@ -533,7 +538,7 @@ namespace Game
             DrawEntity(e.Graphics, player);
             dialogue.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
             dialogue.text = "";
-            dialogue.brush.Color = Dialogue.defaultColor;
+            dialogue.brush.Color = Prompt.defaultColor;
         }
 
         private void AdjustView()
