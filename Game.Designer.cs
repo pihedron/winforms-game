@@ -28,42 +28,41 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.canvas = new System.Windows.Forms.PictureBox();
-            this.timer = new System.Windows.Forms.Timer(this.components);
-            ((System.ComponentModel.ISupportInitialize)(this.canvas)).BeginInit();
-            this.SuspendLayout();
+            components = new System.ComponentModel.Container();
+            canvas = new PictureBox();
+            timer = new System.Windows.Forms.Timer(components);
+            ((System.ComponentModel.ISupportInitialize)canvas).BeginInit();
+            SuspendLayout();
             // 
             // canvas
             // 
-            this.canvas.Location = new System.Drawing.Point(12, 12);
-            this.canvas.Name = "canvas";
-            this.canvas.Size = new System.Drawing.Size(984, 449);
-            this.canvas.TabIndex = 0;
-            this.canvas.TabStop = false;
-            this.canvas.Paint += new System.Windows.Forms.PaintEventHandler(this.OnCanvasPaint);
+            canvas.Location = new Point(12, 12);
+            canvas.Name = "canvas";
+            canvas.Size = new Size(984, 449);
+            canvas.TabIndex = 0;
+            canvas.TabStop = false;
+            canvas.Paint += OnCanvasPaint;
             // 
             // timer
             // 
-            this.timer.Enabled = true;
-            this.timer.Interval = 1;
-            this.timer.Tick += new System.EventHandler(this.Tick);
+            timer.Enabled = true;
+            timer.Interval = 1;
+            timer.Tick += Tick;
             // 
             // Game
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1008, 537);
-            this.Controls.Add(this.canvas);
-            this.Name = "Game";
-            this.Text = "Game";
-            this.Load += new System.EventHandler(this.OnLoad);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
-            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.OnKeyUp);
-            this.Resize += new System.EventHandler(this.OnFormResize);
-            ((System.ComponentModel.ISupportInitialize)(this.canvas)).EndInit();
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1008, 537);
+            Controls.Add(canvas);
+            Name = "Game";
+            Text = "Game";
+            Load += OnLoad;
+            KeyDown += OnKeyDown;
+            KeyUp += OnKeyUp;
+            Resize += OnFormResize;
+            ((System.ComponentModel.ISupportInitialize)canvas).EndInit();
+            ResumeLayout(false);
         }
 
         #endregion

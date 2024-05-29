@@ -17,10 +17,11 @@ namespace Game
 
         public const string prefix = "../../../";
 
+        public static Vector view = new();
+
         static int level = 0;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
-        static Vector view = new();
         static Block?[,] grid;
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
@@ -29,6 +30,7 @@ namespace Game
         static bool paused = false;
         static bool interferenceExists = false;
         static int lastFlipped = -1;
+        static PauseMenu pm = new();
 
         static int tick = 0;
 
@@ -42,10 +44,6 @@ namespace Game
             // fullscreen settings
             canvas.Dock = DockStyle.Fill;
             AdjustView();
-
-            // event listeners
-            KeyDown += OnKeyDown;
-            KeyUp += OnKeyUp;
 
             // load assets
             player.GetFrames();
@@ -120,7 +118,7 @@ namespace Game
             }
         }
 
-        private char GetChar(string[] rows, int x , int y)
+        private char GetChar(string[] rows, int x, int y)
         {
             if (0 <= x && x < rows[0].Length && 0 <= y && y < rows.Length)
             {
@@ -150,7 +148,7 @@ namespace Game
         private void OnKeyUp(object? sender, KeyEventArgs e)
         {
             kb[e.KeyCode] = false;
-            shadow[Keys.Space] = false;
+            shadow[e.KeyCode] = false;
         }
 
         private static bool Pressed(Keys key)
@@ -197,11 +195,26 @@ namespace Game
             }
         }
 
+        private void ShowPauseMenu(Graphics g)
+        {
+            brush.Color = Color.FromArgb(200, 0, 0, 0);
+            DrawBox(g, new(), view);
+            pm.Show(g, view / 2);
+        }
+
         private void Tick(object? sender, EventArgs e)
         {
-            if (Pressed(Keys.Escape)) paused = true;
+            if (Pressed(Keys.Escape) && !Down(Keys.Escape))
+            {
+                paused ^= true;
+                shadow[Keys.Escape] = true;
+            }
 
-            if (paused) return;
+            if (paused)
+            {
+                canvas.Invalidate();
+                return;
+            }
 
             if (player.isDying)
             {
@@ -383,7 +396,7 @@ namespace Game
             }
         }
 
-        private Vector Offset(Vector vec)
+        public Vector Offset(Vector vec)
         {
             return vec - cam.pos + view / 2;
         }
@@ -536,9 +549,12 @@ namespace Game
             brush.Color = Color.Black;
             DrawWorld(e.Graphics);
             DrawEntity(e.Graphics, player);
+
             dialogue.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
             dialogue.text = "";
             dialogue.brush.Color = Prompt.defaultColor;
+
+            if (paused) ShowPauseMenu(e.Graphics);
         }
 
         private void AdjustView()
