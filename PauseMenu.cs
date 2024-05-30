@@ -21,14 +21,22 @@ namespace Game
             font = new(ff, 16, FontStyle.Regular, GraphicsUnit.Pixel);
         }
 
-        public void Show(Graphics g, Vector pos)
+        public void Show(Graphics g)
         {
             StringFormat stringFormat = new()
             {
-                Alignment = StringAlignment.Center,
-                LineAlignment = StringAlignment.Center
+                Alignment = StringAlignment.Near,
+                LineAlignment = StringAlignment.Near
             };
-            g.DrawString("PAUSED", font, brush, pos.x, pos.y, stringFormat);
+            //g.DrawString("PAUSED", font, brush, Game.view.x / 2, Game.view.y / 2, stringFormat);
+            int y = 4;
+            foreach (var gate in Node.gates)
+            {
+                brush.Color = gate.Value.color;
+                g.DrawString(gate.Key, font, brush, 0, y, stringFormat);
+                y += 16 + 4;
+            }
+            brush.Color = defaultColor;
         }
     }
 }

@@ -199,7 +199,7 @@ namespace Game
         {
             brush.Color = Color.FromArgb(200, 0, 0, 0);
             DrawBox(g, new(), view);
-            pm.Show(g, view / 2);
+            pm.Show(g);
         }
 
         private void Tick(object? sender, EventArgs e)
