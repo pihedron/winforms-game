@@ -13,8 +13,8 @@ namespace Game
 
         const float friction = 0.25F;
         const float gravity = 1;
-        const int size = 64;
 
+        public const int size = 64;
         public const string prefix = "../../../";
 
         public static Vector view = new();
@@ -37,6 +37,8 @@ namespace Game
         public Game()
         {
             InitializeComponent();
+
+            MouseWheel += OnMouseWheel;
 
             // draw settings
             pen.Alignment = System.Drawing.Drawing2D.PenAlignment.Inset;
@@ -179,17 +181,17 @@ namespace Game
 
         private void MovePlayer()
         {
-            if (Pressed(Keys.D) || Pressed(Keys.Right))
+            if (Pressed(Keys.D))
             {
                 player.vel.x += player.movePower;
             }
 
-            if (Pressed(Keys.A) || Pressed(Keys.Left))
+            if (Pressed(Keys.A))
             {
                 player.vel.x -= player.movePower;
             }
 
-            if ((Pressed(Keys.W) || Pressed(Keys.Up)) && player.isGrounded)
+            if (Pressed(Keys.W) && player.isGrounded)
             {
                 player.vel.y = -player.jumpHeight;
             }
@@ -206,12 +208,17 @@ namespace Game
         {
             if (Pressed(Keys.Escape) && !Down(Keys.Escape))
             {
+                pm.scroll = new();
                 paused ^= true;
                 shadow[Keys.Escape] = true;
             }
 
             if (paused)
             {
+                if (Pressed(Keys.Down)) pm.vel.y++;
+                if (Pressed(Keys.Up)) pm.vel.y--;
+                pm.scroll += pm.vel;
+                pm.vel *= 1 - friction;
                 canvas.Invalidate();
                 return;
             }
@@ -571,6 +578,11 @@ namespace Game
         private void OnLoad(object sender, EventArgs e)
         {
             // game settings
+        }
+
+        private void OnMouseWheel(object sender, MouseEventArgs e)
+        {
+            pm.vel.y -= e.Delta / Math.Abs(e.Delta) * size / 2;
         }
     }
 }

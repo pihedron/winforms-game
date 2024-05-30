@@ -25,7 +25,19 @@ namespace Game
             },
             {
                 "XOR",
-                (Color.RebeccaPurple, (bool a, bool b) => a ^ b)
+                (Color.Lime, (bool a, bool b) => a ^ b)
+            },
+            {
+                "NAND",
+                (Color.Cyan, (bool a, bool b) => !(a && b))
+            },
+            {
+                "NOR",
+                (Color.Magenta, (bool a, bool b) => !(a || b))
+            },
+            {
+                "XNOR",
+                (Color.Yellow, (bool a, bool b) => !(a ^ b))
             },
         };
         public static int size = 32;
