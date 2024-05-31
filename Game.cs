@@ -31,6 +31,7 @@ namespace Game
         static bool interferenceExists = false;
         static int lastFlipped = -1;
         static PauseMenu pm = new();
+        static Vector mouse = new();
 
         static int tick = 0;
 
@@ -242,7 +243,7 @@ namespace Game
 
             HandleCollisions(old);
 
-            cam.pos += (player.pos - cam.pos) / 4;
+            cam.pos += (player.pos + (mouse - view / 2) / 2 - cam.pos) / 4;
 
             if (tick % 5 == 0)
             {
@@ -544,7 +545,7 @@ namespace Game
                     else
                     {
                         DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
-                        DrawBlock(g, block);
+                        DrawBlock(g, block); // causes lag
                     }
                 }
             }
@@ -583,6 +584,12 @@ namespace Game
         private void OnMouseWheel(object sender, MouseEventArgs e)
         {
             pm.vel.y -= e.Delta / Math.Abs(e.Delta) * size / 2;
+        }
+
+        private void OnMouseMove(object sender, MouseEventArgs e)
+        {
+            mouse.x = e.X;
+            mouse.y = e.Y;
         }
     }
 }
