@@ -32,6 +32,8 @@ namespace Game
         static int lastFlipped = -1;
         static PauseMenu pm = new();
         static Vector mouse = new();
+        static bool graphicsOn = true;
+        static bool peekOn = true;
 
         static int tick = 0;
 
@@ -205,6 +207,15 @@ namespace Game
             pm.Show(g);
         }
 
+        private void Toggle(ref bool b, Keys key)
+        {
+            if (Pressed(key) && !Down(key))
+            {
+                b ^= true;
+                shadow[key] = true;
+            }
+        }
+
         private void Tick(object? sender, EventArgs e)
         {
             if (Pressed(Keys.Escape) && !Down(Keys.Escape))
@@ -213,6 +224,9 @@ namespace Game
                 paused ^= true;
                 shadow[Keys.Escape] = true;
             }
+
+            Toggle(ref graphicsOn, Keys.G);
+            Toggle(ref peekOn, Keys.M);
 
             if (paused)
             {
@@ -243,7 +257,7 @@ namespace Game
 
             HandleCollisions(old);
 
-            cam.pos += (player.pos + (mouse - view / 2) / 2 - cam.pos) / 4;
+            cam.pos += (player.pos + (peekOn ? 1 : 0) * ((mouse - view / 2) / 2) - cam.pos) / 4;
 
             if (tick % 5 == 0)
             {
@@ -419,6 +433,28 @@ namespace Game
             g.FillRectangle(brush, pos.x, pos.y, dim.x, dim.y);
         }
 
+        private void DrawFinish(Graphics g, Block block)
+        {
+            Vector pos = Offset(block.pos - block.dim / 2);
+            const int div = 16;
+            const int step = size / div;
+            for (int x = 0; x < div; x++)
+            {
+                for (int y = 0; y < div; y++)
+                {
+                    if ((x + y) % 2 == 0)
+                    {
+                        brush.Color = Color.Black;
+                    }
+                    else
+                    {
+                        brush.Color = Color.White;
+                    }
+                    g.FillRectangle(brush, pos.x + x * step, pos.y + y * step, step, step);
+                }
+            }
+        }
+
         private static void DrawBoxOutline(Graphics g, Vector pos, Vector dim)
         {
             g.DrawRectangle(pen, pos.x, pos.y, dim.x, dim.y);
@@ -427,22 +463,23 @@ namespace Game
         private void DrawAnimatedImage(Graphics g, Vector pos, Vector dim)
         {
             Bitmap[] frames = player.stateFrames[player.state];
-            player.frameIndex %= frames.Length;
-            Bitmap frame = frames[player.frameIndex];
+            player.frameIndex %= frames.Length / 2;
+            Bitmap frame = frames[player.frameIndex * 2 + (player.isFacingLeft ? 1 : 0)];
             Vector vec = Offset(new(pos.x - frame.Width / 2, pos.y - frame.Height + dim.y / 2));
-            Bitmap bitmap = (Bitmap)frame.Clone();
-            if (player.isFacingLeft)
-            {
-                bitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
-            }
-            g.DrawImage(bitmap, vec.x, vec.y, bitmap.Width, bitmap.Height);
-            bitmap.Dispose();
+            g.DrawImage(frame, vec.x, vec.y, frame.Width, frame.Height);
         }
 
         private void DrawBlock(Graphics g, Block block)
         {
             Vector pos = Offset(block.pos - block.dim / 2);
             g.DrawImage(block.image, pos.x, pos.y, block.image.Width, block.image.Height);
+        }
+
+        private void DrawSpike(Graphics g, Block block)
+        {
+            Vector pos = Offset(block.pos - new Vector(0, block.dim.y / 2));
+            g.FillPolygon(brush, new PointF[3] { new(pos.x - block.dim.x / 2, pos.y + block.dim.y), new(pos.x - block.dim.x / 4, pos.y), new(pos.x, pos.y + block.dim.y) });
+            g.FillPolygon(brush, new PointF[3] { new(pos.x + block.dim.x / 2, pos.y + block.dim.y), new(pos.x + block.dim.x / 4, pos.y), new(pos.x, pos.y + block.dim.y) });
         }
 
         private void DrawEntity(Graphics g, Entity entity)
@@ -540,12 +577,17 @@ namespace Game
                 {
                     if (block.isDangerous)
                     {
-                        DrawBlock(g, block);
+                        if (graphicsOn) DrawBlock(g, block);
+                        else DrawSpike(g, block);
+                    }
+                    else if (block.isEnd)
+                    {
+                        DrawFinish(g, block);
                     }
                     else
                     {
                         DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
-                        DrawBlock(g, block); // causes lag
+                        if (graphicsOn) DrawBlock(g, block); // causes lag
                     }
                 }
             }
@@ -581,7 +623,7 @@ namespace Game
             // game settings
         }
 
-        private void OnMouseWheel(object sender, MouseEventArgs e)
+        private void OnMouseWheel(object? sender, MouseEventArgs e)
         {
             pm.vel.y -= e.Delta / Math.Abs(e.Delta) * size / 2;
         }

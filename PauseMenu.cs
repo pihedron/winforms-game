@@ -17,11 +17,16 @@ namespace Game
         public Pen pen = new(defaultColor, 2);
         public Vector scroll = new();
         public Vector vel = new();
-        public Dictionary<string, string> keybinds = new()
+        public Dictionary<string, string> movement = new()
         {
             { "W", "jump" },
             { "A", "left" },
             { "D", "right" },
+        };
+        public Dictionary<string, string> toggles = new()
+        {
+            { "G", "graphics" },
+            { "M", "mouse peek" },
         };
 
         private const int spacing = 4;
@@ -75,7 +80,39 @@ namespace Game
             x = (int)((int)(Game.view.x * 6 / 8) - scroll.x);
             y = (int)((int)(Game.view.y / 8) + spacing - scroll.y);
 
-            foreach (var bind in keybinds)
+            stringFormat.Alignment = StringAlignment.Near;
+            stringFormat.LineAlignment = StringAlignment.Near;
+
+            g.DrawString("MOVEMENT", font, brush, x, y, stringFormat);
+
+            y += Game.size / 2 + spacing;
+
+            foreach (var bind in movement)
+            {
+                stringFormat.Alignment = StringAlignment.Center;
+                stringFormat.LineAlignment = StringAlignment.Center;
+
+                g.DrawRectangle(pen, x, y, Game.size / 2, Game.size / 2);
+                g.DrawString(bind.Key, font, brush, x + Game.size / 4, y + Game.size / 4, stringFormat);
+
+                stringFormat.Alignment = StringAlignment.Near;
+                stringFormat.LineAlignment = StringAlignment.Center;
+
+                g.DrawString(bind.Value, font, brush, x + Game.size / 2 + spacing, y + Game.size / 4, stringFormat);
+
+                y += Game.size / 2 + spacing;
+            }
+
+            y += Game.size / 2 + spacing;
+
+            stringFormat.Alignment = StringAlignment.Near;
+            stringFormat.LineAlignment = StringAlignment.Near;
+
+            g.DrawString("TOGGLES", font, brush, x, y, stringFormat);
+
+            y += Game.size / 2 + spacing;
+
+            foreach (var bind in toggles)
             {
                 stringFormat.Alignment = StringAlignment.Center;
                 stringFormat.LineAlignment = StringAlignment.Center;

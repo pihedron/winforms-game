@@ -44,7 +44,11 @@ namespace Game
                 List<Bitmap> frames = new();
                 foreach (var file in Directory.EnumerateFiles($"{Game.prefix}img/{name}/{stateValue.ToString().ToLower()}"))
                 {
-                    frames.Add(new(file));
+                    Bitmap bitmap = new(file);
+                    frames.Add(bitmap);
+                    Bitmap reflected = (Bitmap)bitmap.Clone();
+                    reflected.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                    frames.Add(reflected);
                 }
 
                 stateFrames[stateValue] = frames.ToArray();
