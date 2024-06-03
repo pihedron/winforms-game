@@ -1,3 +1,4 @@
+using System.Drawing.Drawing2D;
 using System.Net.NetworkInformation;
 using System.Windows.Forms;
 using System.Xml.Linq;
@@ -32,6 +33,7 @@ namespace Game
         static int lastFlipped = -1;
         static PauseMenu pm = new();
         static Vector mouse = new();
+        static bool controlsLocked = false;
         static bool graphicsOn = true;
         static bool peekOn = true;
 
@@ -83,13 +85,13 @@ namespace Game
                             break;
                         case '^':
                             dim = new(size, size / 2);
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2 + new Vector(0, size / 2), dim, $"{prefix}img/block/spike.png", true);
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2 + new Vector(0, size / 2), dim, $"{prefix}img/block/1111.png", true);
                             break;
                         case '[':
                             spawn = GetPosition(x, y) + dim / 2;
                             break;
                         case ']':
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/end.png")
+                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
                             {
                                 isEnd = true
                             };
@@ -129,6 +131,7 @@ namespace Game
             {
                 return rows[y][x];
             }
+            if (y >= rows.Length) return '#';
             return ' ';
         }
 
@@ -184,6 +187,8 @@ namespace Game
 
         private void MovePlayer()
         {
+            if (controlsLocked) return;
+
             if (Pressed(Keys.D))
             {
                 player.vel.x += player.movePower;
@@ -472,7 +477,7 @@ namespace Game
         private void DrawBlock(Graphics g, Block block)
         {
             Vector pos = Offset(block.pos - block.dim / 2);
-            g.DrawImage(block.image, pos.x, pos.y, block.image.Width, block.image.Height);
+            g.DrawImage(block.image, new RectangleF(pos.x, pos.y, block.dim.x, block.dim.y), new RectangleF(0, 0, size / 4, size / 4), GraphicsUnit.Pixel);
         }
 
         private void DrawSpike(Graphics g, Block block)
@@ -569,16 +574,18 @@ namespace Game
             brush.Color = Color.Black;
             pen.Color = Color.Black;
 
-            foreach (var block in grid)
+            Vector position = cam.pos - view / 2;
+            Vector n = view / size;
+            (int sx, int sy) = GetIndex(position);
+            for (int x = 0; x < n.x + 1; x++)
             {
-                if (block == null) continue;
-                Vector pos = Offset(block.pos - block.dim / 2);
-                if (IntersectingTopLeft(pos, block.dim, new(), view))
+                for (int y = 0; y < n.y + 1; y++)
                 {
+                    Block? block = GetZone(sx + x, sy + y);
+                    if (block == null) continue;
                     if (block.isDangerous)
                     {
-                        if (graphicsOn) DrawBlock(g, block);
-                        else DrawSpike(g, block);
+                        DrawSpike(g, block);
                     }
                     else if (block.isEnd)
                     {
@@ -586,8 +593,8 @@ namespace Game
                     }
                     else
                     {
-                        DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
-                        if (graphicsOn) DrawBlock(g, block); // causes lag
+                        if (graphicsOn) DrawBlock(g, block);
+                        else DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
                     }
                 }
             }
@@ -595,6 +602,10 @@ namespace Game
 
         private void OnCanvasPaint(object sender, PaintEventArgs e)
         {
+            // make Bitmap drawing crisp
+            e.Graphics.InterpolationMode = InterpolationMode.NearestNeighbor;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.Half;
+
             e.Graphics.Clear(Color.Gray);
             brush.Color = Color.Black;
             DrawWorld(e.Graphics);
