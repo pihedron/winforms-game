@@ -37,6 +37,9 @@ namespace Game
         static bool controlsLocked = false;
         static bool graphicsOn = true;
         static bool peekOn = true;
+        static Vector artifact;
+        static bool playerCollectedArtifact = false;
+        static int artifactsCollected = 0;
 
         static int tick = 0;
 
@@ -96,6 +99,9 @@ namespace Game
                             {
                                 isEnd = true
                             };
+                            break;
+                        case '*':
+                            artifact = GetPosition(x, y) + dim / 2;
                             break;
                     }
                 }
@@ -184,6 +190,12 @@ namespace Game
             circuitTemplate.nodes.ForEach((item) => circuit.nodes.Add((Node)item.Clone()));
 
             lastFlipped = 0;
+
+            if (playerCollectedArtifact)
+            {
+                playerCollectedArtifact = false;
+                artifactsCollected--;
+            }
         }
 
         private void MovePlayer()
@@ -349,6 +361,12 @@ namespace Game
                 player.isGrounded = true;
             }
 
+            if (!playerCollectedArtifact && player.IsIntersecting(artifact, new(size / 2, size / 2)))
+            {
+                playerCollectedArtifact = true;
+                artifactsCollected++;
+            }
+
             (int x, int y) = GetIndex(player.pos);
             foreach (var block in GetAdjacent(x, y))
             {
@@ -365,6 +383,7 @@ namespace Game
                         if (Pressed(Keys.Space))
                         {
                             level++;
+                            playerCollectedArtifact = false;
                             LoadLevel();
                             Reset();
                             break;
@@ -502,6 +521,15 @@ namespace Game
             DrawAnimatedImage(g, entity.pos, entity.dim);
         }
 
+        private void DrawArtifact(Graphics g)
+        {
+            if (playerCollectedArtifact) return;
+            const int s = size / 2;
+            Vector dim = new(s, s);
+            Vector pos = Offset(artifact - dim / 2);
+            g.FillEllipse(brush, pos.x, pos.y, dim.x, dim.y);
+        }
+
         private bool ActivateNode(Node node)
         {
             return node.children.Length switch
@@ -608,6 +636,8 @@ namespace Game
                     }
                 }
             }
+
+            DrawArtifact(g);
         }
 
         private void OnCanvasPaint(object sender, PaintEventArgs e)
@@ -622,7 +652,7 @@ namespace Game
             DrawEntity(e.Graphics, player);
 
             prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
-            prompt.text = "";
+            prompt.text = Pressed(Keys.E) ? artifactsCollected.ToString() : "";
             prompt.brush.Color = Prompt.defaultColor;
 
             if (paused) ShowPauseMenu(e.Graphics);
