@@ -14,6 +14,7 @@ namespace Game
 
         const float friction = 0.25F;
         const float gravity = 1;
+        const float shake = 4;
 
         public const int size = 64;
         public const string prefix = "../../../";
@@ -26,7 +27,7 @@ namespace Game
         static Block?[,] grid;
         static readonly Circuit circuitTemplate = new();
         static Circuit circuit = new();
-        static Prompt dialogue = new("");
+        static Prompt prompt = new("");
         static Vector spawn;
         static bool paused = false;
         static bool interferenceExists = false;
@@ -245,6 +246,15 @@ namespace Game
 
             if (player.isDying)
             {
+                int i = 0;
+                float v = shake;
+                while (Math.Abs(v) > 0)
+                {
+                    cam.pos.x += v;
+                    v *= -0.5F;
+                    canvas.Invalidate();
+                    i++;
+                }
                 Reset();
             }
 
@@ -351,7 +361,7 @@ namespace Game
                     }
                     else if (block.isEnd)
                     {
-                        dialogue.text = "[SPACE] next level";
+                        prompt.text = "[SPACE] next level";
                         if (Pressed(Keys.Space))
                         {
                             level++;
@@ -543,7 +553,7 @@ namespace Game
                     pen.Color = Color.White;
                     if (player.IsIntersecting(node.pos, node.dim))
                     {
-                        dialogue.text = "[SPACE] flip switch";
+                        prompt.text = "[SPACE] flip switch";
                     }
                 }
                 else
@@ -552,8 +562,8 @@ namespace Game
                     pen.Color = Node.gates[node.gateName].color;
                     if (player.IsIntersecting(node.pos, node.dim))
                     {
-                        dialogue.text = node.gateName;
-                        dialogue.brush.Color = brush.Color;
+                        prompt.text = node.gateName;
+                        prompt.brush.Color = brush.Color;
                     }
                 }
                 foreach (var id in node.children)
@@ -611,9 +621,9 @@ namespace Game
             DrawWorld(e.Graphics);
             DrawEntity(e.Graphics, player);
 
-            dialogue.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
-            dialogue.text = "";
-            dialogue.brush.Color = Prompt.defaultColor;
+            prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
+            prompt.text = "";
+            prompt.brush.Color = Prompt.defaultColor;
 
             if (paused) ShowPauseMenu(e.Graphics);
         }
