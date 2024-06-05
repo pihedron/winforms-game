@@ -21,7 +21,7 @@ namespace Game
 
         public static Vector view = new();
 
-        static int level = 2;
+        static int level = 4;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -258,15 +258,6 @@ namespace Game
 
             if (player.isDying)
             {
-                int i = 0;
-                float v = shake;
-                while (Math.Abs(v) > 0)
-                {
-                    cam.pos.x += v;
-                    v *= -0.5F;
-                    canvas.Invalidate();
-                    i++;
-                }
                 Reset();
             }
 
@@ -384,6 +375,7 @@ namespace Game
                         {
                             level++;
                             playerCollectedArtifact = false;
+                            artifact = null;
                             LoadLevel();
                             Reset();
                             break;
