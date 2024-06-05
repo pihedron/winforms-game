@@ -21,7 +21,7 @@ namespace Game
 
         public static Vector view = new();
 
-        static int level = 0;
+        static int level = 2;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -526,7 +526,7 @@ namespace Game
             if (playerCollectedArtifact) return;
             const int s = size / 2;
             Vector dim = new(s, s);
-            Vector pos = Offset(artifact - dim / 2);
+            Vector pos = Offset(artifact - dim / 2 + new Vector(0, (float)Math.Sin(tick * Math.PI / size) * dim.y / 8));
             g.FillEllipse(brush, pos.x, pos.y, dim.x, dim.y);
         }
 
