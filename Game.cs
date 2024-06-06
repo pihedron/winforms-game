@@ -21,7 +21,7 @@ namespace Game
 
         public static Vector view = new();
 
-        static int level = 5;
+        static int level = 0;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
