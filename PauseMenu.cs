@@ -4,6 +4,7 @@ using System.Drawing.Text;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Game
 {
@@ -12,6 +13,7 @@ namespace Game
         public PrivateFontCollection pfc = new();
         public FontFamily ff;
         public Font font;
+        public Font big;
         public static Color defaultColor = Color.White;
         public SolidBrush brush = new(defaultColor);
         public Pen pen = new(defaultColor, 2);
@@ -36,7 +38,13 @@ namespace Game
             pfc.AddFontFile("../../../font/font.ttf");
             ff = new("Pixel Operator 8", pfc);
             font = new(ff, 16, FontStyle.Regular, GraphicsUnit.Pixel);
+            big = new(ff, 32, FontStyle.Regular, GraphicsUnit.Pixel);
             pen.Alignment = System.Drawing.Drawing2D.PenAlignment.Inset;
+        }
+
+        public void DrawTimer(Graphics g, Stopwatch stopwatch)
+        {
+            g.DrawString($"{stopwatch.ElapsedMilliseconds / 1000}", big, brush, 0, font.Size / 2);
         }
 
         public void Show(Graphics g)

@@ -2,6 +2,7 @@ using System.Drawing.Drawing2D;
 using System.Net.NetworkInformation;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using System.Diagnostics;
 
 namespace Game
 {
@@ -20,8 +21,9 @@ namespace Game
         public const string prefix = "../../../";
 
         public static Vector view = new();
+        public static Stopwatch stopwatch = new();
 
-        static int level = 10;
+        static int level = 0;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -196,6 +198,8 @@ namespace Game
                 playerCollectedArtifact = false;
                 artifactsCollected--;
             }
+
+            stopwatch.Start();
         }
 
         private void MovePlayer()
@@ -248,6 +252,7 @@ namespace Game
 
             if (paused)
             {
+                stopwatch.Stop();
                 if (Pressed(Keys.Down)) pm.vel.y++;
                 if (Pressed(Keys.Up)) pm.vel.y--;
                 pm.scroll += pm.vel;
@@ -366,6 +371,7 @@ namespace Game
                     if (block.isDangerous)
                     {
                         player.isDying = true;
+                        stopwatch.Stop();
                         break;
                     }
                     else if (block.isEnd)
@@ -646,6 +652,8 @@ namespace Game
             prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
             prompt.text = Pressed(Keys.E) ? artifactsCollected.ToString() : "";
             prompt.brush.Color = Prompt.defaultColor;
+
+            pm.DrawTimer(e.Graphics, stopwatch);
 
             if (paused) ShowPauseMenu(e.Graphics);
         }
