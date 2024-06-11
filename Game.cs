@@ -244,6 +244,14 @@ namespace Game
             {
                 pm.scroll = new();
                 paused ^= true;
+                if (paused)
+                {
+                    stopwatch.Stop();
+                }
+                else
+                {
+                    stopwatch.Start();
+                }
                 shadow[Keys.Escape] = true;
             }
 
@@ -252,7 +260,6 @@ namespace Game
 
             if (paused)
             {
-                stopwatch.Stop();
                 if (Pressed(Keys.Down)) pm.vel.y++;
                 if (Pressed(Keys.Up)) pm.vel.y--;
                 pm.scroll += pm.vel;
