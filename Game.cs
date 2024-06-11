@@ -199,26 +199,36 @@ namespace Game
                 artifactsCollected--;
             }
 
-            stopwatch.Start();
+            //stopwatch.Start();
         }
 
         private void MovePlayer()
         {
             if (controlsLocked) return;
 
+            bool moved = false;
+
             if (Pressed(Keys.D))
             {
+                moved = true;
                 player.vel.x += player.movePower;
             }
 
             if (Pressed(Keys.A))
             {
+                moved = true;
                 player.vel.x -= player.movePower;
             }
 
             if (Pressed(Keys.W) && player.isGrounded)
             {
+                moved = true;
                 player.vel.y = -player.jumpHeight;
+            }
+
+            if (!paused && !stopwatch.IsRunning && moved)
+            {
+                stopwatch.Start();
             }
         }
 
@@ -386,6 +396,7 @@ namespace Game
                         prompt.text = "[SPACE] next level";
                         if (Pressed(Keys.Space))
                         {
+                            stopwatch.Stop();
                             level++;
                             playerCollectedArtifact = false;
                             artifact = null;

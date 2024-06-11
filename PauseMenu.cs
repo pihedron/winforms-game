@@ -44,7 +44,7 @@ namespace Game
 
         public void DrawTimer(Graphics g, Stopwatch stopwatch)
         {
-            g.DrawString($"{stopwatch.ElapsedMilliseconds / 1000}", big, brush, 0, font.Size / 2);
+            g.DrawString($"{stopwatch.ElapsedMilliseconds}", big, brush, 0, font.Size / 2);
         }
 
         public void Show(Graphics g)
