@@ -181,6 +181,8 @@ namespace Game
         private void Reset()
         {
             player.isDying = false;
+            player.state = EntityState.Idle;
+            player.frameIndex = 0;
             player.pos = spawn;
             player.vel = new();
             player.isGrounded = false;
@@ -198,8 +200,6 @@ namespace Game
                 playerCollectedArtifact = false;
                 artifactsCollected--;
             }
-
-            //stopwatch.Start();
         }
 
         private void MovePlayer()
@@ -250,6 +250,32 @@ namespace Game
 
         private void Tick(object? sender, EventArgs e)
         {
+            Vector old = player.pos;
+
+            if (player.isDying)
+            {
+                if (player.frameIndex == player.stateFrames[player.state].Length / 2 - 1)
+                {
+                    tick = 0;
+                    Reset();
+                    return;
+                }
+
+                if (tick % 5 == 0)
+                {
+                    player.frameIndex++;
+                }
+
+                player.vel.y += gravity;
+                player.pos += player.vel;
+
+                HandleCollisions(old);
+
+                tick++;
+                canvas.Invalidate();
+                return;
+            }
+
             if (Pressed(Keys.Escape) && !Down(Keys.Escape))
             {
                 pm.scroll = new();
@@ -278,13 +304,6 @@ namespace Game
                 return;
             }
 
-            if (player.isDying)
-            {
-                Reset();
-            }
-
-            Vector old = player.pos;
-
             MovePlayer();
 
             player.vel.y += gravity;
@@ -296,6 +315,8 @@ namespace Game
             player.vel.x *= 1 - friction;
 
             HandleCollisions(old);
+
+            if (player.isDying) return;
 
             cam.pos += (player.pos + (peekOn ? 1 : 0) * ((mouse - view / 2) / 2) - cam.pos) / 4;
 
@@ -385,13 +406,19 @@ namespace Game
             {
                 if (block != null && player.IsIntersecting(block))
                 {
-                    if (block.isDangerous)
+                    if (block.isDangerous && !player.isDying)
                     {
-                        player.isDying = true;
                         stopwatch.Stop();
+
+                        player.vel.y = 0;
+                        player.vel.x = 0;
+                        player.isDying = true;
+                        player.state = EntityState.Die;
+                        tick = 0;
+                        player.frameIndex = 0;
                         break;
                     }
-                    else if (block.isEnd)
+                    else if (block.isEnd && !player.isDying)
                     {
                         prompt.text = "[SPACE] next level";
                         if (Pressed(Keys.Space))

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Game
@@ -10,7 +11,7 @@ namespace Game
     {
         Idle,
         Walk,
-        //Attack,
+        Die,
     }
 
     public class Entity : Box
@@ -42,7 +43,7 @@ namespace Game
             foreach (var stateValue in Enum.GetValues(typeof(EntityState)).Cast<EntityState>())
             {
                 List<Bitmap> frames = new();
-                foreach (var file in Directory.EnumerateFiles($"{Game.prefix}img/{name}/{stateValue.ToString().ToLower()}"))
+                foreach (var file in Directory.EnumerateFiles($"{Game.prefix}img/{name}/{stateValue.ToString().ToLower()}").OrderBy(file => int.Parse(Regex.Match(file, @"\d+").Value)))
                 {
                     Bitmap bitmap = new(file);
                     frames.Add(bitmap);

@@ -1,6 +1,8 @@
-BOX 3 -3 0
-BOX 12 -3 3
-AND 3 -1 1 2
-SRC 2 -1 0
-SRC 4 -1 0
-SRC 11 -5 0
+BOX 9 -1 0
+BOX 16 -2 3
+OR 7 -1 1 2
+SRC 6 -1 1
+SRC 5 -1 1
+OR 16 -3 4 5
+SRC 14 -3 0
+SRC 15 -5 0
