@@ -42,6 +42,22 @@ namespace Game
         static Vector artifact;
         static bool playerCollectedArtifact = false;
         static int artifactsCollected = 0;
+        static int tutorialIndex = 0;
+        static List<(string hint, Func<bool> f)> tutorial = new()
+        {
+            (
+                "[D] move right",
+                () => Pressed(Keys.D)
+            ),
+            (
+                "[W] jump",
+                () => Pressed(Keys.W)
+            ),
+            (
+                "[A] left",
+                () => Pressed(Keys.A)
+            ),
+        };
 
         static int tick = 0;
 
@@ -52,7 +68,7 @@ namespace Game
             MouseWheel += OnMouseWheel;
 
             // draw settings
-            pen.Alignment = System.Drawing.Drawing2D.PenAlignment.Inset;
+            pen.Alignment = PenAlignment.Inset;
 
             // fullscreen settings
             canvas.Dock = DockStyle.Fill;
@@ -693,6 +709,16 @@ namespace Game
             brush.Color = Color.Black;
             DrawWorld(e.Graphics);
             DrawEntity(e.Graphics, player);
+
+            if (level == 0 && tutorialIndex < tutorial.Count)
+            {
+                prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
+                prompt.text = tutorial[tutorialIndex].hint;
+                if (tutorial[tutorialIndex].f())
+                {
+                    tutorialIndex++;
+                }
+            }
 
             prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
             prompt.text = Pressed(Keys.E) ? artifactsCollected.ToString() : "";
