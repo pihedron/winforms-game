@@ -23,7 +23,7 @@ namespace Game
         public static Vector view = new();
         public static Stopwatch stopwatch = new();
 
-        static int level = 11;
+        static int level = 0;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -54,8 +54,12 @@ namespace Game
                 () => Pressed(Keys.W)
             ),
             (
-                "[A] left",
+                "[A] move left",
                 () => Pressed(Keys.A)
+            ),
+            (
+                "[ESC] pause menu",
+                () => Pressed(Keys.Escape)
             ),
         };
         static bool moved = false;
@@ -254,7 +258,7 @@ namespace Game
                 player.vel.y = -player.jumpHeight;
             }
 
-            if (!paused && !stopwatch.IsRunning && moved)
+            if (!end && !paused && !stopwatch.IsRunning && moved)
             {
                 stopwatch.Start();
             }
