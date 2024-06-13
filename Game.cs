@@ -23,7 +23,7 @@ namespace Game
         public static Vector view = new();
         public static Stopwatch stopwatch = new();
 
-        static int level = 0;
+        static int level = 11;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -58,6 +58,8 @@ namespace Game
                 () => Pressed(Keys.A)
             ),
         };
+        static bool moved = false;
+        static bool end = false;
 
         static int tick = 0;
 
@@ -84,69 +86,79 @@ namespace Game
 
         private void LoadLevel()
         {
-            var rows = File.ReadLines($"{prefix}/lvl/{level}/world.txt").ToArray();
-            grid = new Block[rows[0].Length, rows.Length];
-            for (int i = 0; i < grid.GetLength(0); i++)
+            try
             {
-                for (int j = 0; j < grid.GetLength(1); j++)
+                var rows = File.ReadLines($"{prefix}/lvl/{level}/world.txt").ToArray();
+                grid = new Block[rows[0].Length, rows.Length];
+                for (int i = 0; i < grid.GetLength(0); i++)
                 {
-                    grid[i, j] = null;
-                }
-            }
-            for (int y = 0; y < rows.Length; y++)
-            {
-                char[] chars = rows[y].ToCharArray();
-                for (int x = 0; x < chars.Length; x++)
-                {
-                    Vector dim = new(size, size);
-                    switch (chars[x])
+                    for (int j = 0; j < grid.GetLength(1); j++)
                     {
-                        case '#':
-                            string tileName = $"{new string(GetTileVariant(rows, x, y))}.png";
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/{tileName}");
+                        grid[i, j] = null;
+                    }
+                }
+                for (int y = 0; y < rows.Length; y++)
+                {
+                    char[] chars = rows[y].ToCharArray();
+                    for (int x = 0; x < chars.Length; x++)
+                    {
+                        Vector dim = new(size, size);
+                        switch (chars[x])
+                        {
+                            case '#':
+                                string tileName = $"{new string(GetTileVariant(rows, x, y))}.png";
+                                grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/{tileName}");
+                                break;
+                            case '^':
+                                dim = new(size, size / 2);
+                                grid[x, y] = new(GetPosition(x, y) + dim / 2 + new Vector(0, size / 2), dim, $"{prefix}img/block/1111.png", true);
+                                break;
+                            case '[':
+                                spawn = GetPosition(x, y) + dim / 2;
+                                break;
+                            case ']':
+                                grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
+                                {
+                                    isEnd = true
+                                };
+                                break;
+                            case '*':
+                                artifact = GetPosition(x, y) + dim / 2;
+                                break;
+                        }
+                    }
+                }
+                circuitTemplate.nodes.Clear();
+                circuitTemplate.outputs.Clear();
+                string[] lines = File.ReadLines($"{prefix}/lvl/{level}/circuits.txt").ToArray();
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string[] values = lines[i].Split(' ');
+                    Vector pos = new Vector(float.Parse(values[1]), float.Parse(values[2])) * size + new Vector(size, size) / 2;
+                    switch (values[0])
+                    {
+                        case "SRC":
+                            circuitTemplate.nodes.Add(new Node(pos, int.Parse(values[3]) != 0));
                             break;
-                        case '^':
-                            dim = new(size, size / 2);
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2 + new Vector(0, size / 2), dim, $"{prefix}img/block/1111.png", true);
-                            break;
-                        case '[':
-                            spawn = GetPosition(x, y) + dim / 2;
-                            break;
-                        case ']':
-                            grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
+                        case "BOX":
+                            Node node = new(pos, values[3..].Select((string s) => int.Parse(s)).ToArray())
                             {
-                                isEnd = true
+                                dim = new(size, size)
                             };
+                            circuitTemplate.outputs.Add(node);
                             break;
-                        case '*':
-                            artifact = GetPosition(x, y) + dim / 2;
+                        default:
+                            circuitTemplate.nodes.Add(new Node(pos, values[0], values[3..].Select((string s) => int.Parse(s)).ToArray()));
                             break;
                     }
                 }
             }
-            circuitTemplate.nodes.Clear();
-            circuitTemplate.outputs.Clear();
-            string[] lines = File.ReadLines($"{prefix}/lvl/{level}/circuits.txt").ToArray();
-            for (int i = 0; i < lines.Length; i++)
+            catch (Exception e)
             {
-                string[] values = lines[i].Split(' ');
-                Vector pos = new Vector(float.Parse(values[1]), float.Parse(values[2])) * size + new Vector(size, size) / 2;
-                switch (values[0])
-                {
-                    case "SRC":
-                        circuitTemplate.nodes.Add(new Node(pos, int.Parse(values[3]) != 0));
-                        break;
-                    case "BOX":
-                        Node node = new(pos, values[3..].Select((string s) => int.Parse(s)).ToArray())
-                        {
-                            dim = new(size, size)
-                        };
-                        circuitTemplate.outputs.Add(node);
-                        break;
-                    default:
-                        circuitTemplate.nodes.Add(new Node(pos, values[0], values[3..].Select((string s) => int.Parse(s)).ToArray()));
-                        break;
-                }
+                grid = new Block?[0, 0];
+                circuitTemplate.nodes.Clear();
+                circuitTemplate.outputs.Clear();
+                end = true;
             }
         }
 
@@ -196,6 +208,8 @@ namespace Game
 
         private void Reset()
         {
+            moved = false;
+
             player.isDying = false;
             player.state = EntityState.Idle;
             player.frameIndex = 0;
@@ -221,8 +235,6 @@ namespace Game
         private void MovePlayer()
         {
             if (controlsLocked) return;
-
-            bool moved = false;
 
             if (Pressed(Keys.D))
             {
@@ -300,7 +312,7 @@ namespace Game
                 {
                     stopwatch.Stop();
                 }
-                else
+                else if (moved)
                 {
                     stopwatch.Start();
                 }
@@ -411,7 +423,7 @@ namespace Game
                 player.isGrounded = true;
             }
 
-            if (!playerCollectedArtifact && player.IsIntersecting(artifact, new(size / 2, size / 2)))
+            if (!end && !playerCollectedArtifact && player.IsIntersecting(artifact, new(size / 2, size / 2)))
             {
                 playerCollectedArtifact = true;
                 artifactsCollected++;
@@ -684,7 +696,7 @@ namespace Game
                     {
                         DrawSpike(g, block);
                     }
-                    else if (block.isEnd)
+                    else if (block.isEnd && !end)
                     {
                         DrawFinish(g, block);
                     }
@@ -696,7 +708,7 @@ namespace Game
                 }
             }
 
-            DrawArtifact(g);
+            if (!end) DrawArtifact(g);
         }
 
         private void OnCanvasPaint(object sender, PaintEventArgs e)
@@ -710,19 +722,21 @@ namespace Game
             DrawWorld(e.Graphics);
             DrawEntity(e.Graphics, player);
 
+            prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
+
             if (level == 0 && tutorialIndex < tutorial.Count)
             {
-                prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
                 prompt.text = tutorial[tutorialIndex].hint;
                 if (tutorial[tutorialIndex].f())
                 {
                     tutorialIndex++;
                 }
             }
-
-            prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
-            prompt.text = Pressed(Keys.E) ? artifactsCollected.ToString() : "";
-            prompt.brush.Color = Prompt.defaultColor;
+            else
+            {
+                prompt.text = Pressed(Keys.E) ? artifactsCollected.ToString() : "";
+                prompt.brush.Color = Prompt.defaultColor;
+            }
 
             pm.DrawTimer(e.Graphics, stopwatch);
 

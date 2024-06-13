@@ -44,7 +44,12 @@ namespace Game
 
         public void DrawTimer(Graphics g, Stopwatch stopwatch)
         {
-            g.DrawString($"{stopwatch.ElapsedMilliseconds}", big, brush, 0, font.Size / 2);
+            StringFormat stringFormat = new()
+            {
+                Alignment = StringAlignment.Far,
+                LineAlignment = StringAlignment.Near
+            };
+            g.DrawString($"{stopwatch.ElapsedMilliseconds}", big, brush, Game.view.x, font.Size / 2, stringFormat);
         }
 
         public void Show(Graphics g)
@@ -57,8 +62,13 @@ namespace Game
             g.DrawString("[ESC] continue\n\n[UP] [DOWN] scroll", font, brush, Game.view.x / 2, Game.view.y / 2, stringFormat);
             stringFormat.Alignment = StringAlignment.Near;
             stringFormat.LineAlignment = StringAlignment.Near;
+
             int x = (int)((int)(Game.view.x / 8) - scroll.x);
             int y = (int)((int)(Game.view.y / 8) + spacing - scroll.y);
+
+            g.DrawString("CLUES", font, brush, x, y);
+            y += (int)font.Size + spacing * 2;
+
             bool a;
             bool b;
             foreach (var gate in Node.gates)
