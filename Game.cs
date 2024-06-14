@@ -15,7 +15,7 @@ namespace Game
 
         const float friction = 0.25F;
         const float gravity = 1;
-        const float shake = 4;
+        const float shake = size / 2;
 
         public const int size = 64;
         public const string prefix = "../../../";
@@ -302,6 +302,8 @@ namespace Game
                 player.pos += player.vel;
 
                 HandleCollisions(old);
+
+                cam.pos.x += (float)(Math.Sin(tick / 2) * shake) / (tick + 1);
 
                 tick++;
                 canvas.Invalidate();
@@ -700,7 +702,7 @@ namespace Game
                     {
                         DrawSpike(g, block);
                     }
-                    else if (block.isEnd && !end)
+                    else if (block.isEnd)
                     {
                         DrawFinish(g, block);
                     }
