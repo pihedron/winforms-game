@@ -618,6 +618,11 @@ namespace Game
             };
         }
 
+        private void DrawBackground(Graphics g)
+        {
+            
+        }
+
         private void DrawWorld(Graphics g)
         {
             if (cam.pos.y + view.y / 2 > 0)
@@ -625,6 +630,8 @@ namespace Game
                 float y = view.y / 2 - cam.pos.y;
                 g.FillRectangle(brush, 0, y, view.x, view.y - y); // infinite floor
             }
+
+            DrawBackground(g);
 
             brush.Color = Color.Black;
             foreach (var node in circuit.outputs)
