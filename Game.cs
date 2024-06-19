@@ -16,6 +16,8 @@ namespace Game
         const float friction = 0.25F;
         const float gravity = 1;
         const float shake = size / 2;
+        const int tpf = 5;
+        const int tpw = 4;
 
         public const int size = 64;
         public const string prefix = "../../../";
@@ -67,6 +69,13 @@ namespace Game
 
         static int tick = 0;
 
+        // recording tutorials
+        static StreamWriter writer;
+        static bool recording = false;
+
+        // loading tutorials
+        static List<Vector> ghost = new();
+
         public Game()
         {
             InitializeComponent();
@@ -86,6 +95,24 @@ namespace Game
             // create world
             LoadLevel();
             Reset();
+
+            // reset tutorial recording
+            if (recording)
+            {
+                File.WriteAllText($"{prefix}/lvl/{level}/tutorial.txt", string.Empty);
+                writer = new($"{prefix}/lvl/{level}/tutorial.txt");
+            }
+
+            // load ghost
+            if (!recording && level == 0)
+            {
+                string[] lines = File.ReadAllLines($"{prefix}/lvl/{level}/tutorial.txt");
+                foreach (var line in lines)
+                {
+                    string[] positions = line.Split(' ');
+                    ghost.Add(new(int.Parse(positions[0]), int.Parse(positions[1])));
+                }
+            }
         }
 
         private void LoadLevel()
@@ -129,13 +156,7 @@ namespace Game
                             case '*':
                                 artifact = GetPosition(x, y) + dim / 2;
                                 break;
-                            case '!':
-                                grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
-                                {
-                                    isSolid = false
-                                };
-                                break;
-                            case '>':
+                            default:
                                 grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
                                 {
                                     isSolid = false
@@ -175,6 +196,10 @@ namespace Game
                 circuitTemplate.nodes.Clear();
                 circuitTemplate.outputs.Clear();
                 end = true;
+            }
+            if (recording && level != 0)
+            {
+                writer.Close();
             }
         }
 
@@ -305,7 +330,7 @@ namespace Game
                     return;
                 }
 
-                if (tick % 5 == 0)
+                if (tick % tpf == 0)
                 {
                     player.frameIndex++;
                 }
@@ -366,9 +391,14 @@ namespace Game
 
             cam.pos += (player.pos + (peekOn ? 1 : 0) * ((mouse - view / 2) / 2) - cam.pos) / 4;
 
-            if (tick % 5 == 0)
+            if (tick % tpf == 0)
             {
                 player.frameIndex++;
+            }
+
+            if (tick % tpw == 0 && level == 0 && recording)
+            {
+                writer.WriteLine($"{Math.Round(player.pos.x)} {Math.Round(player.pos.y)}");
             }
 
             tick++;
@@ -630,9 +660,18 @@ namespace Game
             };
         }
 
-        private void DrawBackground(Graphics g)
+        private void DrawGhost(Graphics g)
         {
-            
+            int index = tick / tpw;
+            if (tick / tpw >= ghost.Count - 1) index = ghost.Count - 1;
+            for (int i = 0; i < index; i++)
+            {
+                Vector current = Offset(ghost[i]);
+                Vector next = Offset(ghost[i + 1]);
+                pen.Color = Color.FromArgb(byte.MaxValue / 2, Color.Black);
+                g.DrawLine(pen, current.x, current.y, next.x, next.y);
+                pen.Color = Color.Black;
+            }
         }
 
         private void DrawWorld(Graphics g)
@@ -643,7 +682,7 @@ namespace Game
                 g.FillRectangle(brush, 0, y, view.x, view.y - y); // infinite floor
             }
 
-            DrawBackground(g);
+            if (!recording && level == 0 && !player.isDying) DrawGhost(g);
 
             brush.Color = Color.Black;
             foreach (var node in circuit.outputs)
@@ -725,10 +764,14 @@ namespace Game
                     {
                         DrawFinish(g, block);
                     }
+                    else if (block.isSolid)
+                    {
+                        if (graphicsOn) DrawBlock(g, block);
+                        else DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
+                    }
                     else
                     {
-                        if (graphicsOn || block.isSolid) DrawBlock(g, block);
-                        else DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
+                        // dynamic tutorial blocks
                     }
                 }
             }
