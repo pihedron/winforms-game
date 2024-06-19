@@ -129,6 +129,18 @@ namespace Game
                             case '*':
                                 artifact = GetPosition(x, y) + dim / 2;
                                 break;
+                            case '!':
+                                grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
+                                {
+                                    isSolid = false
+                                };
+                                break;
+                            case '>':
+                                grid[x, y] = new(GetPosition(x, y) + dim / 2, dim, $"{prefix}img/block/1111.png")
+                                {
+                                    isSolid = false
+                                };
+                                break;
                         }
                     }
                 }
@@ -438,7 +450,7 @@ namespace Game
             (int x, int y) = GetIndex(player.pos);
             foreach (var block in GetAdjacent(x, y))
             {
-                if (block != null && player.IsIntersecting(block))
+                if (block != null && block.isSolid && player.IsIntersecting(block))
                 {
                     if (block.isDangerous && !player.isDying)
                     {
@@ -715,7 +727,7 @@ namespace Game
                     }
                     else
                     {
-                        if (graphicsOn) DrawBlock(g, block);
+                        if (graphicsOn || block.isSolid) DrawBlock(g, block);
                         else DrawBox(g, Offset(block.pos - block.dim / 2), block.dim);
                     }
                 }

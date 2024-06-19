@@ -10,6 +10,7 @@ namespace Game
     {
         public bool isDangerous = false;
         public bool isEnd = false;
+        public bool isSolid = true;
         public Bitmap image;
 
         public Block(Vector pos, Vector dim, string imagePath) : base(pos, dim)
