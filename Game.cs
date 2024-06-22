@@ -25,7 +25,7 @@ namespace Game
         public static Vector view = new();
         public static Stopwatch stopwatch = new();
 
-        static int level = 0;
+        static int level = 11;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -84,6 +84,8 @@ namespace Game
 
             // draw settings
             pen.Alignment = PenAlignment.Inset;
+            pen.StartCap = LineCap.Round;
+            pen.EndCap = LineCap.Round;
 
             // fullscreen settings
             canvas.Dock = DockStyle.Fill;
@@ -196,6 +198,7 @@ namespace Game
                 circuitTemplate.nodes.Clear();
                 circuitTemplate.outputs.Clear();
                 end = true;
+                spawn = new(0, 0);
             }
             if (recording && level != 0)
             {
@@ -576,6 +579,11 @@ namespace Game
             return vec - cam.pos + view / 2;
         }
 
+        public Vector Offset(Vector vec, float z)
+        {
+            return (vec - cam.pos) / z + view / 2;
+        }
+
         private static bool IntersectingTopLeft(Vector p1, Vector d1, Vector p2, Vector d2)
         {
             return p1.x + d1.x > p2.x && p1.x < p2.x + d2.x && p1.y + d1.y > p2.y && p1.y < p2.y + d2.y;
@@ -663,14 +671,16 @@ namespace Game
         private void DrawGhost(Graphics g)
         {
             int index = tick / tpw;
-            if (tick / tpw >= ghost.Count - 1) index = ghost.Count - 1;
-            for (int i = 0; i < index; i++)
+            index %= ghost.Count - 1;
+            int trail = index - tpw * 2 + ghost.Count;
+            trail %= ghost.Count - 1;
+            for (int i = trail; i < index; i++)
             {
                 Vector current = Offset(ghost[i]);
                 Vector next = Offset(ghost[i + 1]);
-                pen.Color = Color.FromArgb(byte.MaxValue / 2, Color.Black);
+                pen.Color = Color.Orange;
+                pen.Width = 4;
                 g.DrawLine(pen, current.x, current.y, next.x, next.y);
-                pen.Color = Color.Black;
             }
         }
 
@@ -685,6 +695,8 @@ namespace Game
             if (!recording && level == 0 && !player.isDying) DrawGhost(g);
 
             brush.Color = Color.Black;
+            pen.Color = Color.Black;
+            pen.Width = 2;
             foreach (var node in circuit.outputs)
             {
                 Vector dim = node.dim;
@@ -787,6 +799,17 @@ namespace Game
 
             e.Graphics.Clear(Color.Gray);
             brush.Color = Color.Black;
+
+            if (end)
+            {
+                int z = 4;
+                Font font = new(pm.ff, pm.font.Size * 4 / z);
+                Vector pos = Offset(new(size * 16, -size / 2), z);
+                e.Graphics.DrawString($"{artifactsCollected} / {level}\nartifacts", font, brush, pos.x, pos.y, new() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+                pos = Offset(new(size * -16, -size / 2), z);
+                e.Graphics.DrawString($"{stopwatch.ElapsedMilliseconds}\nmilliseconds", font, brush, pos.x, pos.y, new() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+            }
+
             DrawWorld(e.Graphics);
             DrawEntity(e.Graphics, player);
 
@@ -802,7 +825,7 @@ namespace Game
             }
             else
             {
-                prompt.text = Pressed(Keys.E) ? artifactsCollected.ToString() : "";
+                prompt.text = Pressed(Keys.E) ? $"artifacts: {artifactsCollected}" : "";
                 prompt.brush.Color = Prompt.defaultColor;
             }
 
