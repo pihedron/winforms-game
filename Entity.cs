@@ -12,6 +12,7 @@ namespace Game
         Idle,
         Walk,
         Die,
+        Attack,
     }
 
     public class Entity : Box

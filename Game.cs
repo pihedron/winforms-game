@@ -8,8 +8,28 @@ namespace Game
 {
     public partial class Game : Form
     {
-        static Dictionary<Keys, bool> kb = new();
-        static Dictionary<Keys, bool> shadow = new();
+        static Dictionary<Keys, bool> kb = new()
+        {
+            { Keys.W, false },
+            { Keys.A, false },
+            { Keys.D, false },
+            { Keys.E, false },
+            { Keys.G, false },
+            { Keys.M, false },
+            { Keys.Escape, false },
+            { Keys.Space, false },
+            { Keys.Up, false },
+            { Keys.Down, false },
+            { Keys.Left, false },
+            { Keys.Right, false },
+        };
+        static Dictionary<Keys, bool> shadow = new()
+        {
+            { Keys.G, false },
+            { Keys.M, false },
+            { Keys.Escape, false },
+            { Keys.Space, false },
+        };
         static SolidBrush brush = new(Color.Black);
         static Pen pen = new(Color.Black, 2);
 
@@ -250,12 +270,12 @@ namespace Game
 
         private static bool Pressed(Keys key)
         {
-            return kb.ContainsKey(key) && kb[key];
+            return kb[key];
         }
 
         private static bool Down(Keys key)
         {
-            return shadow.ContainsKey(key) && shadow[key];
+            return shadow[key];
         }
 
         private void Reset()
