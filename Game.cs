@@ -30,6 +30,7 @@ namespace Game
             { Keys.Escape, false },
             { Keys.Space, false },
         };
+        static bool mouseDown = false;
         static SolidBrush brush = new(Color.Black);
         static Pen pen = new(Color.Black, 2);
 
@@ -45,7 +46,7 @@ namespace Game
         public static Vector view = new();
         public static Stopwatch stopwatch = new();
 
-        static int level = 14;
+        static int level = 0;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -410,7 +411,21 @@ namespace Game
 
             player.vel.y += gravity;
 
-            AnimatePlayer();
+            if (mouseDown && player.state != EntityState.Attack)
+            {
+                player.state = EntityState.Attack;
+                player.frameIndex = 0;
+            }
+
+            if (player.state == EntityState.Attack && player.frameIndex < player.stateFrames[player.state].Length / 2 - 1)
+            {
+                controlsLocked = true;
+            }
+            else
+            {
+                controlsLocked = false;
+                AnimatePlayer();
+            }
 
             player.pos += player.vel;
 
@@ -887,6 +902,16 @@ namespace Game
         {
             mouse.x = e.X;
             mouse.y = e.Y;
+        }
+
+        private void OnMouseDown(object sender, MouseEventArgs e)
+        {
+            mouseDown = true;
+        }
+
+        private void OnMouseUp(object sender, MouseEventArgs e)
+        {
+            mouseDown = false;
         }
     }
 }

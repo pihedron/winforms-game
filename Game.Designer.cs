@@ -42,7 +42,9 @@
             canvas.TabIndex = 0;
             canvas.TabStop = false;
             canvas.Paint += OnCanvasPaint;
+            canvas.MouseDown += OnMouseDown;
             canvas.MouseMove += OnMouseMove;
+            canvas.MouseUp += OnMouseUp;
             // 
             // timer
             // 
