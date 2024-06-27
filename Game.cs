@@ -25,7 +25,7 @@ namespace Game
         public static Vector view = new();
         public static Stopwatch stopwatch = new();
 
-        static int level = 0;
+        static int level = 14;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -45,25 +45,7 @@ namespace Game
         static bool playerCollectedArtifact = false;
         static int artifactsCollected = 0;
         static int tutorialIndex = 0;
-        static List<(string hint, Func<bool> f)> tutorial = new()
-        {
-            (
-                "[D] move right",
-                () => Pressed(Keys.D)
-            ),
-            (
-                "[W] jump",
-                () => Pressed(Keys.W)
-            ),
-            (
-                "[A] move left",
-                () => Pressed(Keys.A)
-            ),
-            (
-                "[ESC] pause menu",
-                () => Pressed(Keys.Escape)
-            ),
-        };
+        static List<List<(string hint, Func<bool> f)>> tutorial = new();
         static bool moved = false;
         static bool end = false;
 
@@ -98,17 +80,20 @@ namespace Game
             LoadLevel();
             Reset();
 
-            // reset tutorial recording
+            // ghost tutorial
+            string ghostPath = $"{prefix}/lvl/{level}/ghost.txt";
+
+            // reset ghost recording
             if (recording)
             {
-                File.WriteAllText($"{prefix}/lvl/{level}/tutorial.txt", string.Empty);
-                writer = new($"{prefix}/lvl/{level}/tutorial.txt");
+                File.WriteAllText(ghostPath, string.Empty);
+                writer = new(ghostPath);
             }
 
             // load ghost
             if (!recording && level == 0)
             {
-                string[] lines = File.ReadAllLines($"{prefix}/lvl/{level}/tutorial.txt");
+                string[] lines = File.ReadAllLines(ghostPath);
                 foreach (var line in lines)
                 {
                     string[] positions = line.Split(' ');
@@ -200,6 +185,29 @@ namespace Game
                 end = true;
                 spawn = new(0, 0);
             }
+
+            // text tutorial
+            for (int i = tutorial.Count; i <= level; i++)
+            {
+                tutorial.Add(new());
+            }
+            string tutorialPath = $"{prefix}/lvl/{level}/tutorial.txt";
+            try
+            {
+                string[] lines = File.ReadAllLines(tutorialPath);
+                foreach (var line in lines)
+                {
+                    string[] cells = line.Split(':');
+                    int keyCode = int.Parse(cells[0]);
+                    string text = cells[1];
+                    tutorial[level].Add((text, () => Pressed((Keys)keyCode)));
+                }
+            }
+            catch (Exception e)
+            {
+                // ignore
+            }
+
             if (recording && level != 0)
             {
                 writer.Close();
@@ -358,7 +366,7 @@ namespace Game
                 {
                     stopwatch.Stop();
                 }
-                else if (moved)
+                else if (moved && !end)
                 {
                     stopwatch.Start();
                 }
@@ -815,10 +823,10 @@ namespace Game
 
             prompt.Show(e.Graphics, Offset(player.pos - new Vector(0, player.dim.y / 2)));
 
-            if (level == 0 && tutorialIndex < tutorial.Count)
+            if (tutorialIndex < tutorial[level].Count)
             {
-                prompt.text = tutorial[tutorialIndex].hint;
-                if (tutorial[tutorialIndex].f())
+                prompt.text = tutorial[level][tutorialIndex].hint;
+                if (tutorial[level][tutorialIndex].f())
                 {
                     tutorialIndex++;
                 }
