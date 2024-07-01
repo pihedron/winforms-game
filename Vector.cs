@@ -19,6 +19,11 @@ namespace Game
 
         public Vector() { }
 
+        public float SquaredDistance()
+        {
+            return x * x + y * y;
+        }
+
         public static Vector operator +(Vector a, Vector b)
         {
             return new Vector(a.x + b.x, a.y + b.y);

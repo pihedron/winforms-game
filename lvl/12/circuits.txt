@@ -1,3 +1,4 @@
+HINT 2 -2 2 -2 NOR is a_universal gate
 BOX 9 -3 0
 BOX 11 -3 3
 BOX 13 -4 4

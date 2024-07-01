@@ -1,3 +1,4 @@
+HINT 7 -3 7 -3 think_carefully
 BOX 0 -2 0
 BOX 10 -2 2
 BOX 13 -3 1

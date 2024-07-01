@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Game
 {
@@ -46,7 +47,7 @@ namespace Game
         public static Vector view = new();
         public static Stopwatch stopwatch = new();
 
-        static int level = 0;
+        static int level = 14;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -78,6 +79,9 @@ namespace Game
 
         // loading tutorials
         static List<Vector> ghost = new();
+
+        // game hints
+        static List<Hint> hints = new();
 
         public Game()
         {
@@ -173,6 +177,7 @@ namespace Game
                         }
                     }
                 }
+                hints.Clear();
                 circuitTemplate.nodes.Clear();
                 circuitTemplate.outputs.Clear();
                 string[] lines = File.ReadLines($"{prefix}/lvl/{level}/circuits.txt").ToArray();
@@ -191,6 +196,11 @@ namespace Game
                                 dim = new(size, size)
                             };
                             circuitTemplate.outputs.Add(node);
+                            break;
+                        case "HINT":
+                            Vector target = new Vector(float.Parse(values[3]), float.Parse(values[4])) * size + new Vector(size, size) / 2;
+                            Hint hint = new(pos, target, string.Join(' ', values[5..]).Replace('_', '\n'));
+                            hints.Add(hint);
                             break;
                         default:
                             circuitTemplate.nodes.Add(new Node(pos, values[0], values[3..].Select((string s) => int.Parse(s)).ToArray()));
@@ -411,7 +421,7 @@ namespace Game
 
             player.vel.y += gravity;
 
-            if (mouseDown && player.state != EntityState.Attack)
+            if (mouseDown && player.isGrounded && player.state != EntityState.Attack)
             {
                 player.state = EntityState.Attack;
                 player.frameIndex = 0;
@@ -830,6 +840,40 @@ namespace Game
                     }
                 }
             }
+
+            foreach (var hint in hints)
+            {
+                float squaredDistance = (hint.pos - player.pos).SquaredDistance();
+                int squaredRadius = Hint.radius * Hint.radius;
+                if (squaredDistance > squaredRadius) continue;
+                float fract = Math.Min(1, 2 - 2 * squaredDistance / squaredRadius);
+                Color c = Color.FromArgb((byte)(fract * byte.MaxValue), Color.Black);
+                brush.Color = c;
+                pen.Color = c;
+                StringFormat stringFormat = new() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                Vector pos = Offset(hint.pos);
+                Vector target = Offset(hint.target);
+                g.DrawString(hint.message, pm.font, brush, pos.x, pos.y, stringFormat);
+
+                if (target == pos) continue;
+
+                Vector delta = target - pos;
+
+                if (delta.x != 0)
+                {
+                    delta.x /= Math.Abs(delta.x);
+                }
+
+                if (delta.y != 0)
+                {
+                    delta.y /= Math.Abs(delta.y);
+                }
+
+                g.DrawLine(pen, pos.x + delta.x * size / 2, pos.y + delta.y * size / 2, target.x, target.y);
+            }
+
+            brush.Color = Color.Black;
+            pen.Color = Color.Black;
 
             if (!end) DrawArtifact(g);
         }

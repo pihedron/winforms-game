@@ -1,3 +1,4 @@
+HINT 13 -4 16 -4 for the_pros
 BOX 5 -5 0
 BOX 9 -5 1
 BOX 13 -5 2

@@ -1,3 +1,4 @@
+HINT 4 -3 4 -3 move mouse_to look
 BOX 9 -1 0
 BOX 16 -2 3
 OR 7 -1 1 2

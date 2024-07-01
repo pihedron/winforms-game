@@ -1,4 +1,4 @@
 68:[D] move right
 87:[W] jump
 65:[A] move left
-27:[ESC] pause menu
+27:[ESC] help

@@ -1,3 +1,4 @@
+HINT 6 -2 6 -2 press [ESC]_for clues
 BOX 4 -3 0
 BOX 12 -3 3
 AND 4 -1 1 2

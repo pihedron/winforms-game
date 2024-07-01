@@ -17,7 +17,7 @@ namespace Game
         {
             {
                 "AND",
-                (Color.CornflowerBlue, (bool a, bool b) => a && b)
+                (Color.Blue, (bool a, bool b) => a && b)
             },
             {
                 "OR",

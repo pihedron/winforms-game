@@ -1,3 +1,7 @@
+HINT 8 -4 10 -3 open_door
+HINT 15 -5.5 15 -4.5 another_path
+HINT 22 -4.5 22 -3.5 turn_it on
+HINT 4 -9 2 -8 bonus_item
 BOX 12 -3 0
 BOX 15 -4 1
 BOX 22 -3 2

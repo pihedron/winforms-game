@@ -1,3 +1,4 @@
+HINT 7 -2 7 -2 press [SPACE]_early
 BOX 3 -2 0
 BOX 4 -2 2
 XNOR 3 -5 1 2
