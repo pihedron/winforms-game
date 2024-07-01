@@ -49,7 +49,7 @@ namespace Game
                 Alignment = StringAlignment.Far,
                 LineAlignment = StringAlignment.Near
             };
-            g.DrawString($"{stopwatch.ElapsedMilliseconds}", big, brush, Game.view.x, font.Size / 2, stringFormat);
+            g.DrawString($"{stopwatch.ElapsedMilliseconds} ms", big, brush, Game.view.x, font.Size / 2, stringFormat);
         }
 
         public void Show(Graphics g)

@@ -47,7 +47,7 @@ namespace Game
         public static Vector view = new();
         public static Stopwatch stopwatch = new();
 
-        static int level = 14;
+        static int level = 0;
         static Entity player = new(new Vector(), new Vector(size / 2, size), 2, 16, "player");
         static Camera cam = new();
         static Block?[,] grid;
@@ -69,6 +69,7 @@ namespace Game
         static int tutorialIndex = 0;
         static List<List<(string hint, Func<bool> f)>> tutorial = new();
         static bool moved = false;
+        static bool nearFinish = false;
         static bool end = false;
 
         static int tick = 0;
@@ -291,6 +292,7 @@ namespace Game
 
         private void Reset()
         {
+            nearFinish = false;
             moved = false;
 
             player.isDying = false;
@@ -443,6 +445,16 @@ namespace Game
 
             HandleCollisions(old);
 
+            if (Pressed(Keys.Space) && nearFinish)
+            {
+                stopwatch.Stop();
+                level++;
+                playerCollectedArtifact = false;
+                artifact = null;
+                LoadLevel();
+                Reset();
+            }
+
             if (player.isDying) return;
 
             cam.pos += (player.pos + (peekOn ? 1 : 0) * ((mouse - view / 2) / 2) - cam.pos) / 4;
@@ -518,7 +530,10 @@ namespace Game
 
         private void HandleCollisions(Vector old)
         {
+            nearFinish = false;
             player.isGrounded = false;
+
+            bool killedThisFrame = false;
 
             if (player.pos.y + player.dim.y / 2 > 0)
             {
@@ -541,34 +556,28 @@ namespace Game
                     if (block.isDangerous && !player.isDying)
                     {
                         stopwatch.Stop();
-
-                        player.vel.y = 0;
-                        player.vel.x = 0;
-                        player.isDying = true;
-                        player.state = EntityState.Die;
-                        tick = 0;
-                        player.frameIndex = 0;
-                        break;
+                        killedThisFrame = true;
                     }
                     else if (block.isEnd && !player.isDying)
                     {
                         prompt.text = "[SPACE] next level";
-                        if (Pressed(Keys.Space))
-                        {
-                            stopwatch.Stop();
-                            level++;
-                            playerCollectedArtifact = false;
-                            artifact = null;
-                            LoadLevel();
-                            Reset();
-                            break;
-                        }
+                        nearFinish = true;
                     }
                     else
                     {
                         CollideWithBox(old, block);
                     }
                 }
+            }
+
+            if (killedThisFrame)
+            {
+                player.vel.y = 0;
+                player.vel.x = 0;
+                player.isDying = true;
+                player.state = EntityState.Die;
+                tick = 0;
+                player.frameIndex = 0;
             }
 
             foreach (var node in circuit.outputs)
