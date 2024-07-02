@@ -13,6 +13,9 @@ namespace Game
         Walk,
         Die,
         Attack,
+        Appear,
+        Vanish,
+        Zap,
     }
 
     public class Entity : Box
@@ -43,17 +46,24 @@ namespace Game
         {
             foreach (var stateValue in Enum.GetValues(typeof(EntityState)).Cast<EntityState>())
             {
-                List<Bitmap> frames = new();
-                foreach (var file in Directory.EnumerateFiles($"{Game.prefix}img/{name}/{stateValue.ToString().ToLower()}").OrderBy(file => int.Parse(Regex.Match(file, @"\d+").Value)))
+                try
                 {
-                    Bitmap bitmap = new(file);
-                    frames.Add(bitmap);
-                    Bitmap reflected = (Bitmap)bitmap.Clone();
-                    reflected.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                    frames.Add(reflected);
-                }
+                    List<Bitmap> frames = new();
+                    foreach (var file in Directory.EnumerateFiles($"{Game.prefix}img/{name}/{stateValue.ToString().ToLower()}").OrderBy(file => int.Parse(Regex.Match(file, @"\d+").Value)))
+                    {
+                        Bitmap bitmap = new(file);
+                        frames.Add(bitmap);
+                        Bitmap reflected = (Bitmap)bitmap.Clone();
+                        reflected.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                        frames.Add(reflected);
+                    }
 
-                stateFrames[stateValue] = frames.ToArray();
+                    stateFrames[stateValue] = frames.ToArray();
+                }
+                catch (Exception e)
+                {
+                    // skip
+                }
             }
         }
     }
