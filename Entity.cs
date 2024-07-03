@@ -13,9 +13,6 @@ namespace Game
         Walk,
         Die,
         Attack,
-        Appear,
-        Vanish,
-        Zap,
     }
 
     public class Entity : Box
