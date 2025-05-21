@@ -4,7 +4,7 @@ This is a Windows Forms puzzle platformer game made for a school project. Check 
 
 ## Requirements
 
-- Windows 10
+- Windows 10+
 - .NET 6
 
 ## Features
