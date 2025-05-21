@@ -1,6 +1,6 @@
-# Game
+# Bitmurai
 
-This is a Windows Forms puzzle platformer game.
+This is a Windows Forms puzzle platformer game made for a school project. Check the [releases](/releases) tab to download the game.
 
 ## Requirements
 
